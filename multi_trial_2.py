@@ -14,7 +14,7 @@ def creator(data, q):
 
 def my_consumer(q):
 
-    # Consume ssome data and works on it
+    # Consume some data and works on it
     # In this case, all it does is double the input
 
     while True:

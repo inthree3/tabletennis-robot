@@ -1,5 +1,6 @@
 from multiprocessing import Process,Queue
 import numpy as np
+#여러 개 함수를 구조적으로 실행할 수 있는 간단한 예제 test
 
 def func1(q):
     a = np.ones((3,2))

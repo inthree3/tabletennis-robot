@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import os
 
-os.chdir('C:\Example\PingPong_Vision')
+os.chdir('C:/Users/user/Desktop/Dev/PingPong_Vision')
 
 # Set Initial Value
 global hmin_0, hmax_0, smin_0, smax_0, vmin_0, vmax_0
