@@ -12,6 +12,7 @@ def nothing(x):
 def click_color_0(event, x, y, flags, params):
     #global vars declaration
     global hmin_0, hmax_0, smin_0, smax_0, vmin_0, vmax_0
+    tolerance=40
 
     if event == cv2.EVENT_LBUTTONDBLCLK:
         selected_color=params[y, x]
@@ -19,8 +20,8 @@ def click_color_0(event, x, y, flags, params):
         hue=int(hsv_color[0][0][0]) #for cv2.inRange error being resolved
         shade=int(hsv_color[0][0][1])
         value=int(hsv_color[0][0][2])
-        lower_color=[hue-10, shade-10, value-10]
-        upper_color=[hue+10, shade+10, value+10]
+        lower_color=[hue-tolerance, shade-tolerance, value-tolerance]
+        upper_color=[hue+tolerance, shade+tolerance, value+tolerance]
 
         #set the color range as global
         [hmin_0, smin_0, vmin_0]=lower_color
@@ -65,7 +66,7 @@ def vision_set(print_std):
     src_0 = cv2.copyTo(src_0, mask0)
 
     cv2.imshow('src_1', frame_1)
-    src_1 = cv2.remap(frame_1, mapx1, mapy1, cv2.INTER_LINEAR)
+    src_1 = cv2.remap(frame_1, mapx0, mapy0, cv2.INTER_LINEAR)
     src_1 = cv2.copyTo(src_1, mask1)
 
     cv2.imshow('src_0', src_0)
@@ -77,6 +78,13 @@ def vision_set(print_std):
     cv2.setMouseCallback('src_0', click_color_0, src_hsv_0)
     cv2.setMouseCallback('src_1', click_color_1, src_hsv_1)
 
+    #check for 2D matrix
+    def checkPoints(event, x, y, flags, param) :
+        if event == cv2.EVENT_LBUTTONDOWN :
+            print('current (x, y) : ', x, y)
+
+    # cv2.setMouseCallback('src_0', checkPoints)
+
 
     # Detecting Color Setting
     dst_0 = cv2.inRange(src_hsv_0, (hmin_0, smin_0, vmin_0), (hmax_0, smax_0, vmax_0))
@@ -86,11 +94,11 @@ def vision_set(print_std):
     # cv2.imshow('dst_1', dst_1)
 
     # MORPH 함수 이용하여 정확도 향상(Value Optimization)
-    kernel = np.ones((3, 3), np.uint8)
-    dst_0 = cv2.morphologyEx(dst_0, cv2.MORPH_OPEN, kernel)
-    dst_0 = cv2.morphologyEx(dst_0, cv2.MORPH_CLOSE, kernel)
-    dst_1 = cv2.morphologyEx(dst_1, cv2.MORPH_OPEN, kernel)
-    dst_1 = cv2.morphologyEx(dst_1, cv2.MORPH_CLOSE, kernel)
+    # kernel = np.ones((3, 3), np.uint8)
+    # dst_0 = cv2.morphologyEx(dst_0, cv2.MORPH_OPEN, kernel)
+    # dst_0 = cv2.morphologyEx(dst_0, cv2.MORPH_CLOSE, kernel)
+    # dst_1 = cv2.morphologyEx(dst_1, cv2.MORPH_OPEN, kernel)
+    # dst_1 = cv2.morphologyEx(dst_1, cv2.MORPH_CLOSE, kernel)
 
     # 마스크 이미지로 원본 이미지에서 범위값에 해당되는 영상 부분을 획득
 
@@ -113,7 +121,7 @@ def vision_set(print_std):
         centerX, centerY = int(centroid[0]), int(centroid[1])
         # print(centerX, centerY)
 
-        if 25 < area < 300:
+        if 100 < area < 8000:
             # 일정 범위 이상 & 이하인 부분에 대해서만 centroids 값 반환
 
             cv2.circle(src_0, (centerX, centerY), 10, (0, 0, 255), 10)
@@ -131,7 +139,7 @@ def vision_set(print_std):
         x, y, width, height, area = stats_1[idx]
         centerX, centerY = int(centroid[0]), int(centroid[1])
 
-        if 25 < area < 300:
+        if 100 < area < 8000:
             # 일정 범위 이상 & 이하인 부분에 대해서만 centroids 값 반환
             cv2.circle(src_1, (centerX, centerY), 10, (0, 0, 255), 10)
             cv2.rectangle(src_1, (x, y), (x + width, y + height), (0, 0, 255))
@@ -156,7 +164,7 @@ def vision_set(print_std):
     cv2.imshow('dst_1', dst_1)
     cv2.imshow('img_result_1', img_result_1)
 
-    if print_std%45==0:
+    if print_std%22==0:
         print('')
         print('-----------------------------------------')
         print(ball_cam0)
@@ -292,28 +300,28 @@ if __name__ == '__main__':
 
     # Set Camera Matrix
 
-    R0 = np.linalg.inv(np.array([[0.9242, -0.2864, 0.2526],
-                                 [0.3812, 0.7312, -0.5658],
-                                 [-0.0227, 0.6192, 0.7849]]))
+    #R0 = np.linalg.inv(np.array([[-0.6403, -0.6730, -1.4113], 
+     #                            [-0.5477, -0.5929, -1.4882], 
+      #                           [-0.4374, -0.4086 , -1.4703]]))
+    r0 = np.array([-0.6668007, -0.48129638, 1.40815667])
+    r1 = np.array([-0.0701413, 0.84496778, 2.963346])
 
-    R1 = np.linalg.inv(np.array([[0.6989, -0.3543, 0.6213],
-                                 [0.7148, 0.3153, -0.6243],
-                                 [0.0253, 0.8804, 0.4736]]))
-
-    T0 = np.array([-1142.2, 183.7513, 1669.1])
-
-    T1 = np.array([-398.5379, 165.7630, 1398.9])
+    R0, _ = cv2.Rodrigues(r0)
+    R1, _ = cv2.Rodrigues(r1)
+    
+    T0 = np.array([13.35128918, 4.80785346, 64.68655925])
+    T1 = np.array([-0.38225996, 0.99411966, 13.37263133])
 
     # Translation Matrix between each cam & World Coord
     # Focal length of each cam
 
     cam0_f = np.array([766.8537, 769.1458])
-    cam1_f = np.array([765.3281, 767.4927])
+    cam1_f = np.array([509.5084, 507.6457])
 
     # Principle Point of each cam
 
     cam0_c = np.array([647.6205, 345.3208])
-    cam1_c = np.array([641.5385, 366.9369])
+    cam1_c = np.array([313.1442, 244.8337])
 
     # Distortion
 
@@ -324,14 +332,15 @@ if __name__ == '__main__':
 
     # Intrinsics Matrix
 
-    cam0_int = np.array([[cam0_f[0], 0, cam0_c[0]], [0, cam0_f[1], cam0_c[1]], [0, 0, 1]])
-    cam1_int = np.array([[cam1_f[0], 0, cam1_c[0]], [0, cam1_f[1], cam1_c[1]], [0, 0, 1]])
+    cam0_int = np.array([[778.03379157, 0., 652.68977971], [0., 778.19712171, 370.48020828], [0.,  0., 1.]])
+    cam1_int = np.array([[509.50837051, 0., 313.14423307], [0., 507.64569231, 244.83368204], [0., 0., 1.]])
 
     mtx0 = cam0_int
     mtx1 = cam1_int
 
-    dist0 = np.hstack([cam0_dist_r, cam0_dist_t])
-    dist1 = np.hstack([cam1_dist_r, cam1_dist_t])
+    dist0 = np.array([0.22928257, -0.45419591,  0.00182889,  0.00148427,  0.13923846]) #hstack: 가로로 두 array 붙이는 연산
+    dist1 = np.array([1.31360056e+01, -2.92892275e+02, 5.44147704e-01,  2.32045256e-01,
+   2.58058485e+03])
 
     print('intrinsics Matrix')
     print('')
@@ -444,7 +453,7 @@ if __name__ == '__main__':
         else:
             impact = 0
 
-        if print_std%45==0:
+        if print_std%22==0:
             print('impact')
             print(impact)
         data_impact = str(impact)
@@ -452,11 +461,11 @@ if __name__ == '__main__':
 
         ball_3D_temp = ball_3D
 
-        if print_std%45==0:
+        if print_std%22==0:
             print(temp_0)
 
         tm.stop()
-        if print_std%45==0:
+        if print_std%22==0:
             print('Calc time : {}ms.'.format(tm.getTimeMilli()))
             print_std=0
 
