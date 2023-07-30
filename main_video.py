@@ -15,16 +15,16 @@ ball_3D_temp = np.array([[0], [0], [0], [1]])
 
 h, w = np.array([720, 1280])
 
+
 #set initial color range
 lower_color = [18, 71, 100]
 upper_color = [25, 88, 100]
 
 [hmin_0, smin_0, vmin_0]=lower_color
-print("hmin_0, smin_0, vmin_0: ", hmin_0, smin_0, vmin_0)
-print("Types of hmin_0, smin_0, vmin_0: ", type((hmin_0, smin_0, vmin_0)))
-
 [hmax_0, smax_0, vmax_0]=upper_color
-print("hmax_0, smax_0, vmax_0: ", hmax_0, smax_0, vmax_0)
+
+[hmin_1, smin_1, vmin_1]=lower_color
+[hmax_1, smax_1, vmax_1]=upper_color
 
 
 def nothing(x):
@@ -47,6 +47,25 @@ def click_color_0(event, x, y, flags, params):
         #set the color range as global
         [hmin_0, smin_0, vmin_0]=lower_color
         [hmax_0, smax_0, vmax_0]=upper_color
+        print("Selected HSV Range is ", lower_color, upper_color)
+
+def click_color_1(event, x, y, flags, params):
+    #global vars declaration
+    global hmin_1, hmax_1, smin_1, smax_1, vmin_1, vmax_1
+
+
+    if event == cv2.EVENT_LBUTTONDBLCLK:
+        selected_color=params[y, x]
+        hsv_color=cv2.cvtColor(np.uint8([[selected_color]]), cv2.COLOR_BGR2HSV)
+        hue=int(hsv_color[0][0][0]) #for cv2.inRange error being resolved
+        shade=int(hsv_color[0][0][1])
+        value=int(hsv_color[0][0][2])
+        lower_color=[hue-10, shade-10, value-10]
+        upper_color=[hue+10, shade+10, value+10]
+
+        #set the color range as global
+        [hmin_1, smin_1, vmin_1]=lower_color
+        [hmax_1, smax_1, vmax_1]=upper_color
         print("Selected HSV Range is ", lower_color, upper_color)
 
 
@@ -76,7 +95,6 @@ T0 = np.array([-1142.2, 183.7513, 1669.1])
 T1 = np.array([-398.5379, 165.7630, 1398.9])
 
 # Translation Matrix between each cam & World Coord
-
 
 # Focal length(Re)
 cam0_f = np.array([766.8537, 769.1458])
@@ -185,34 +203,6 @@ mask1 = cv2.imread('cam1_mask_cali_v2.jpg', cv2.IMREAD_GRAYSCALE)
 cv2.namedWindow('dst_0')
 cv2.namedWindow('dst_1')
 
-# Set Trackbar
-
-cv2.createTrackbar('H_min_0', 'dst_0', 0, 255, nothing)
-cv2.setTrackbarPos('H_min_0', 'dst_0', 0)
-cv2.createTrackbar('H_max_0', 'dst_0', 0, 255, nothing)
-cv2.setTrackbarPos('H_max_0', 'dst_0', 255)
-cv2.createTrackbar('S_min_0', 'dst_0', 0, 255, nothing)
-cv2.setTrackbarPos('S_min_0', 'dst_0', 0)
-cv2.createTrackbar('S_max_0', 'dst_0', 0, 255, nothing)
-cv2.setTrackbarPos('S_max_0', 'dst_0', 255)
-cv2.createTrackbar('V_min_0', 'dst_0', 0, 255, nothing)
-cv2.setTrackbarPos('V_min_0', 'dst_0', 0)
-cv2.createTrackbar('V_max_0', 'dst_0', 0, 255, nothing)
-cv2.setTrackbarPos('V_max_0', 'dst_0', 255)
-
-cv2.createTrackbar('H_min_1', 'dst_1', 0, 255, nothing)
-cv2.setTrackbarPos('H_min_1', 'dst_1', 0)
-cv2.createTrackbar('H_max_1', 'dst_1', 0, 255, nothing)
-cv2.setTrackbarPos('H_max_1', 'dst_1', 255)
-cv2.createTrackbar('S_min_1', 'dst_1', 0, 255, nothing)
-cv2.setTrackbarPos('S_min_1', 'dst_1', 0)
-cv2.createTrackbar('S_max_1', 'dst_1', 0, 255, nothing)
-cv2.setTrackbarPos('S_max_1', 'dst_1', 255)
-cv2.createTrackbar('V_min_1', 'dst_1', 0, 255, nothing)
-cv2.setTrackbarPos('V_min_1', 'dst_1', 0)
-cv2.createTrackbar('V_max_1', 'dst_1', 0, 255, nothing)
-cv2.setTrackbarPos('V_max_1', 'dst_1', 255)
-
 #print speed criteria
 print_std=0
 
@@ -221,12 +211,12 @@ while True:
     ret_0, frame_0 = cap0.read()
     ret_1, frame_1 = cap1.read()
 
-    cv2.imshow('src_0', frame_1)
-    src_0 = cv2.remap(frame_1, mapx0, mapy0, cv2.INTER_LINEAR)
+    cv2.imshow('src_0', frame_0)
+    src_0 = cv2.remap(frame_0, mapx0, mapy0, cv2.INTER_LINEAR)
     src_0 = cv2.copyTo(src_0, mask0)
 
-    cv2.imshow('src_1', frame_0)
-    src_1 = cv2.remap(frame_0, mapx1, mapy1, cv2.INTER_LINEAR)
+    cv2.imshow('src_1', frame_1)
+    src_1 = cv2.remap(frame_1, mapx1, mapy1, cv2.INTER_LINEAR)
     src_1 = cv2.copyTo(src_1, mask1)
 
     #     # 이미지 불러와졌는지
@@ -240,11 +230,7 @@ while True:
     src_hsv_0 = cv2.cvtColor(src_0, cv2.COLOR_BGR2HSV)
     src_hsv_1 = cv2.cvtColor(src_1, cv2.COLOR_BGR2HSV)
 
-    # Trackbar 불러오기
-    on_trackbar_1()
-
     # Detecting Color Setting
-    print()
     dst_0 = cv2.inRange(src_hsv_0, (hmin_0, smin_0, vmin_0), (hmax_0, smax_0, vmax_0))
     dst_1 = cv2.inRange(src_hsv_1, (hmin_1, smin_1, vmin_1), (hmax_1, smax_1, vmax_1))
 
@@ -318,6 +304,7 @@ while True:
 
     cv2.imshow('src_1', src_1)
     cv2.imshow('dst_1', dst_1)
+    cv2.setMouseCallback('src_1', click_color_1, src_hsv_1)
     cv2.imshow('img_result_1', img_result_1)
 
     # Store temp value for Predicting
