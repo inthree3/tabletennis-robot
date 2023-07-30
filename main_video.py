@@ -52,7 +52,7 @@ def click_color_0(event, x, y, flags, params):
 def click_color_1(event, x, y, flags, params):
     #global vars declaration
     global hmin_1, hmax_1, smin_1, smax_1, vmin_1, vmax_1
-
+    tolerance=35 #set color range width
 
     if event == cv2.EVENT_LBUTTONDBLCLK:
         selected_color=params[y, x]
@@ -60,24 +60,13 @@ def click_color_1(event, x, y, flags, params):
         hue=int(hsv_color[0][0][0]) #for cv2.inRange error being resolved
         shade=int(hsv_color[0][0][1])
         value=int(hsv_color[0][0][2])
-        lower_color=[hue-10, shade-10, value-10]
-        upper_color=[hue+10, shade+10, value+10]
+        lower_color=[hue-tolerance, shade-tolerance, value-tolerance]
+        upper_color=[hue+tolerance, shade+tolerance, value+tolerance]
 
         #set the color range as global
         [hmin_1, smin_1, vmin_1]=lower_color
         [hmax_1, smax_1, vmax_1]=upper_color
         print("Selected HSV Range is ", lower_color, upper_color)
-
-
-def on_trackbar_1():
-    global hmin_1, hmax_1, smin_1, smax_1, vmin_1, vmax_1
-
-    hmin_1 = cv2.getTrackbarPos('H_min_1', 'dst_1')
-    hmax_1 = cv2.getTrackbarPos('H_max_1', 'dst_1')
-    smin_1 = cv2.getTrackbarPos('S_min_1', 'dst_1')
-    smax_1 = cv2.getTrackbarPos('S_max_1', 'dst_1')
-    vmin_1 = cv2.getTrackbarPos('V_min_1', 'dst_1')
-    vmax_1 = cv2.getTrackbarPos('V_max_1', 'dst_1')
 
 
 # Set Camera Matrix
@@ -200,8 +189,8 @@ mask1 = cv2.imread('cam1_mask_cali_v2.jpg', cv2.IMREAD_GRAYSCALE)
 
 # cv2.namedWindow('src')
 
-cv2.namedWindow('dst_0')
-cv2.namedWindow('dst_1')
+# cv2.namedWindow('dst_0')
+# cv2.namedWindow('dst_1')
 
 #print speed criteria
 print_std=0
@@ -234,15 +223,16 @@ while True:
     dst_0 = cv2.inRange(src_hsv_0, (hmin_0, smin_0, vmin_0), (hmax_0, smax_0, vmax_0))
     dst_1 = cv2.inRange(src_hsv_1, (hmin_1, smin_1, vmin_1), (hmax_1, smax_1, vmax_1))
 
-    cv2.imshow('dst_0', dst_0)
-    cv2.imshow('dst_1', dst_1)
+    #dst_0 and dst_1 are mask image for detecting the balls
+    # cv2.imshow('dst_0', dst_0)
+    # cv2.imshow('dst_1', dst_1)
 
-    # MORPH 함수 이용하여 정확도 향상(Value Optimization)
-    kernel = np.ones((3, 3), np.uint8)
-    dst_0 = cv2.morphologyEx(dst_0, cv2.MORPH_OPEN, kernel)
-    dst_0 = cv2.morphologyEx(dst_0, cv2.MORPH_CLOSE, kernel)
-    dst_1 = cv2.morphologyEx(dst_1, cv2.MORPH_OPEN, kernel)
-    dst_1 = cv2.morphologyEx(dst_1, cv2.MORPH_CLOSE, kernel)
+    # MORPH 함수 이용하여 정확도 향상(Value Optimization): morph가 ball mask를 없앨 수 있다고 생각해 주석 처리 (cam1)
+    # kernel = np.ones((3, 3), np.uint8)
+    # dst_0 = cv2.morphologyEx(dst_0, cv2.MORPH_OPEN, kernel)
+    # dst_0 = cv2.morphologyEx(dst_0, cv2.MORPH_CLOSE, kernel)
+    # dst_1 = cv2.morphologyEx(dst_1, cv2.MORPH_OPEN, kernel)
+    # dst_1 = cv2.morphologyEx(dst_1, cv2.MORPH_CLOSE, kernel)
 
     # 마스크 이미지로 원본 이미지에서 범위값에 해당되는 영상 부분을 획득
     # 실제 구동시 X
