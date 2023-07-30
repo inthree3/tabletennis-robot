@@ -15,20 +15,39 @@ ball_3D_temp = np.array([[0], [0], [0], [1]])
 
 h, w = np.array([720, 1280])
 
+#set initial color range
+lower_color = [18, 71, 100]
+upper_color = [25, 88, 100]
+
+[hmin_0, smin_0, vmin_0]=lower_color
+print("hmin_0, smin_0, vmin_0: ", hmin_0, smin_0, vmin_0)
+print("Types of hmin_0, smin_0, vmin_0: ", type((hmin_0, smin_0, vmin_0)))
+
+[hmax_0, smax_0, vmax_0]=upper_color
+print("hmax_0, smax_0, vmax_0: ", hmax_0, smax_0, vmax_0)
+
 
 def nothing(x):
     pass
 
-
-def on_trackbar_0():
+def click_color_0(event, x, y, flags, params):
+    #global vars declaration
     global hmin_0, hmax_0, smin_0, smax_0, vmin_0, vmax_0
 
-    hmin_0 = cv2.getTrackbarPos('H_min_0', 'dst_0')
-    hmax_0 = cv2.getTrackbarPos('H_max_0', 'dst_0')
-    smin_0 = cv2.getTrackbarPos('S_min_0', 'dst_0')
-    smax_0 = cv2.getTrackbarPos('S_max_0', 'dst_0')
-    vmin_0 = cv2.getTrackbarPos('V_min_0', 'dst_0')
-    vmax_0 = cv2.getTrackbarPos('V_max_0', 'dst_0')
+
+    if event == cv2.EVENT_LBUTTONDBLCLK:
+        selected_color=params[y, x]
+        hsv_color=cv2.cvtColor(np.uint8([[selected_color]]), cv2.COLOR_BGR2HSV)
+        hue=int(hsv_color[0][0][0]) #for cv2.inRange error being resolved
+        shade=int(hsv_color[0][0][1])
+        value=int(hsv_color[0][0][2])
+        lower_color=[hue-10, shade-10, value-10]
+        upper_color=[hue+10, shade+10, value+10]
+
+        #set the color range as global
+        [hmin_0, smin_0, vmin_0]=lower_color
+        [hmax_0, smax_0, vmax_0]=upper_color
+        print("Selected HSV Range is ", lower_color, upper_color)
 
 
 def on_trackbar_1():
@@ -120,6 +139,7 @@ P1 = np.dot(newcameraMtx1, RT1)
 print(P0)
 print(P1)
 
+
 mapx0, mapy0 = cv2.initUndistortRectifyMap(mtx0, dist0, None, newcameraMtx0, (w, h), 5)
 mapx1, mapy1 = cv2.initUndistortRectifyMap(mtx1, dist1, None, newcameraMtx1, (w, h), 5)
 
@@ -137,6 +157,8 @@ cap1.isOpened()
 cap0.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap0.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 cap0.set(cv2.CAP_PROP_FRAME_COUNT, 60)
+cap0.set(cv2.CAP_PROP_POS_MSEC, 11) #set fps approx 90
+cap0.set(cv2.CAP_PROP_AUTOFOCUS, 0) #turn-off autofocus function
 
 w_0 = int(cap0.get(cv2.CAP_PROP_FRAME_WIDTH))
 h_0 = int(cap0.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -147,6 +169,8 @@ print(w_0, h_0)
 cap1.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap1.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 cap1.set(cv2.CAP_PROP_FRAME_COUNT, 60)
+cap1.set(cv2.CAP_PROP_POS_MSEC, 11)
+cap1.set(cv2.CAP_PROP_AUTOFOCUS, 0)
 
 w_1 = int(cap0.get(cv2.CAP_PROP_FRAME_WIDTH))
 h_1 = int(cap0.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -189,6 +213,9 @@ cv2.setTrackbarPos('V_min_1', 'dst_1', 0)
 cv2.createTrackbar('V_max_1', 'dst_1', 0, 255, nothing)
 cv2.setTrackbarPos('V_max_1', 'dst_1', 255)
 
+#print speed criteria
+print_std=0
+
 while True:
 
     ret_0, frame_0 = cap0.read()
@@ -214,10 +241,10 @@ while True:
     src_hsv_1 = cv2.cvtColor(src_1, cv2.COLOR_BGR2HSV)
 
     # Trackbar 불러오기
-    on_trackbar_0()
     on_trackbar_1()
 
     # Detecting Color Setting
+    print()
     dst_0 = cv2.inRange(src_hsv_0, (hmin_0, smin_0, vmin_0), (hmax_0, smax_0, vmax_0))
     dst_1 = cv2.inRange(src_hsv_1, (hmin_1, smin_1, vmin_1), (hmax_1, smax_1, vmax_1))
 
@@ -252,7 +279,7 @@ while True:
         centerX, centerY = int(centroid[0]), int(centroid[1])
         # print(centerX, centerY)
 
-        if 50 < area < 1000:
+        if 25 < area < 300:
             # 일정 범위 이상 & 이하인 부분에 대해서만 centroids 값 반환
 
             cv2.circle(src_0, (centerX, centerY), 10, (0, 0, 255), 10)
@@ -270,7 +297,7 @@ while True:
         x, y, width, height, area = stats_1[idx]
         centerX, centerY = int(centroid[0]), int(centroid[1])
 
-        if 50 < area < 1000:
+        if 25 < area < 300:
             # 일정 범위 이상 & 이하인 부분에 대해서만 centroids 값 반환
             cv2.circle(src_1, (centerX, centerY), 10, (0, 0, 255), 10)
             cv2.rectangle(src_1, (x, y), (x + width, y + height), (0, 0, 255))
@@ -286,6 +313,7 @@ while True:
 
     cv2.imshow('src_0', src_0)
     cv2.imshow('dst_0', dst_0)
+    cv2.setMouseCallback('src_0', click_color_0, src_hsv_0)
     cv2.imshow('img_result_0', img_result_0)
 
     cv2.imshow('src_1', src_1)
@@ -298,8 +326,12 @@ while True:
     ball_cam1_temp = ball_cam1
 
     ball_3D_temp = ball_3D
-    print('ball_3D')
-    print(ball_3D)
+    if print_std%10==0:
+        print('ball_3D')
+        print(ball_3D)
+        print_std=0
+
+    print_std+=1
 
     if cv2.waitKey(1) & 0xFF == 27:
         break
