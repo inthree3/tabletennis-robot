@@ -8,29 +8,46 @@ def nothing(x):
     pass
 
 
-def on_trackbar_0():
+#function: set the ball color range through clicking
+def click_color_0(event, x, y, flags, params):
+    #global vars declaration
     global hmin_0, hmax_0, smin_0, smax_0, vmin_0, vmax_0
 
-    hmin_0 = cv2.getTrackbarPos('H_min_0', 'dst_0')
-    hmax_0 = cv2.getTrackbarPos('H_max_0', 'dst_0')
-    smin_0 = cv2.getTrackbarPos('S_min_0', 'dst_0')
-    smax_0 = cv2.getTrackbarPos('S_max_0', 'dst_0')
-    vmin_0 = cv2.getTrackbarPos('V_min_0', 'dst_0')
-    vmax_0 = cv2.getTrackbarPos('V_max_0', 'dst_0')
+    if event == cv2.EVENT_LBUTTONDBLCLK:
+        selected_color=params[y, x]
+        hsv_color=cv2.cvtColor(np.uint8([[selected_color]]), cv2.COLOR_BGR2HSV)
+        hue=int(hsv_color[0][0][0]) #for cv2.inRange error being resolved
+        shade=int(hsv_color[0][0][1])
+        value=int(hsv_color[0][0][2])
+        lower_color=[hue-10, shade-10, value-10]
+        upper_color=[hue+10, shade+10, value+10]
 
+        #set the color range as global
+        [hmin_0, smin_0, vmin_0]=lower_color
+        [hmax_0, smax_0, vmax_0]=upper_color
+        print("Selected HSV Range is ", lower_color, upper_color)
 
-def on_trackbar_1():
+def click_color_1(event, x, y, flags, params):
+    #global vars declaration
     global hmin_1, hmax_1, smin_1, smax_1, vmin_1, vmax_1
+    tolerance=35 #set color range width
 
-    hmin_1 = cv2.getTrackbarPos('H_min_1', 'dst_1')
-    hmax_1 = cv2.getTrackbarPos('H_max_1', 'dst_1')
-    smin_1 = cv2.getTrackbarPos('S_min_1', 'dst_1')
-    smax_1 = cv2.getTrackbarPos('S_max_1', 'dst_1')
-    vmin_1 = cv2.getTrackbarPos('V_min_1', 'dst_1')
-    vmax_1 = cv2.getTrackbarPos('V_max_1', 'dst_1')
+    if event == cv2.EVENT_LBUTTONDBLCLK:
+        selected_color=params[y, x]
+        hsv_color=cv2.cvtColor(np.uint8([[selected_color]]), cv2.COLOR_BGR2HSV)
+        hue=int(hsv_color[0][0][0]) #for cv2.inRange error being resolved
+        shade=int(hsv_color[0][0][1])
+        value=int(hsv_color[0][0][2])
+        lower_color=[hue-tolerance, shade-tolerance, value-tolerance]
+        upper_color=[hue+tolerance, shade+tolerance, value+tolerance]
+
+        #set the color range as global
+        [hmin_1, smin_1, vmin_1]=lower_color
+        [hmax_1, smax_1, vmax_1]=upper_color
+        print("Selected HSV Range is ", lower_color, upper_color)
 
 
-def vision_set():
+def vision_set(print_std):
     # while True:
 
     global mapx0, mapx1, mapy0, mapy1, mask0, mask1, cap0, cap1
@@ -43,12 +60,12 @@ def vision_set():
     ret_0, frame_0 = cap0.read()
     ret_1, frame_1 = cap1.read()
 
-    cv2.imshow('src_0', frame_1)
-    src_0 = cv2.remap(frame_1, mapx0, mapy0, cv2.INTER_LINEAR)
+    cv2.imshow('src_0', frame_0)
+    src_0 = cv2.remap(frame_0, mapx0, mapy0, cv2.INTER_LINEAR)
     src_0 = cv2.copyTo(src_0, mask0)
 
-    cv2.imshow('src_1', frame_0)
-    src_1 = cv2.remap(frame_0, mapx1, mapy1, cv2.INTER_LINEAR)
+    cv2.imshow('src_1', frame_1)
+    src_1 = cv2.remap(frame_1, mapx1, mapy1, cv2.INTER_LINEAR)
     src_1 = cv2.copyTo(src_1, mask1)
 
     cv2.imshow('src_0', src_0)
@@ -57,16 +74,16 @@ def vision_set():
     src_hsv_0 = cv2.cvtColor(src_0, cv2.COLOR_BGR2HSV)
     src_hsv_1 = cv2.cvtColor(src_1, cv2.COLOR_BGR2HSV)
 
-    # Trackbar 불러오기
-    on_trackbar_0()
-    on_trackbar_1()
+    cv2.setMouseCallback('src_0', click_color_0, src_hsv_0)
+    cv2.setMouseCallback('src_1', click_color_1, src_hsv_1)
+
 
     # Detecting Color Setting
     dst_0 = cv2.inRange(src_hsv_0, (hmin_0, smin_0, vmin_0), (hmax_0, smax_0, vmax_0))
     dst_1 = cv2.inRange(src_hsv_1, (hmin_1, smin_1, vmin_1), (hmax_1, smax_1, vmax_1))
 
-    cv2.imshow('dst_0', dst_0)
-    cv2.imshow('dst_1', dst_1)
+    # cv2.imshow('dst_0', dst_0)
+    # cv2.imshow('dst_1', dst_1)
 
     # MORPH 함수 이용하여 정확도 향상(Value Optimization)
     kernel = np.ones((3, 3), np.uint8)
@@ -139,14 +156,15 @@ def vision_set():
     cv2.imshow('dst_1', dst_1)
     cv2.imshow('img_result_1', img_result_1)
 
-    print('')
-    print('-----------------------------------------')
-    print(ball_cam0)
-    print(ball_cam1)
-    print('ball_3D_temp')
-    print(ball_3D_temp)
-    print('ball_3D')
-    print(ball_3D)
+    if print_std%45==0:
+        print('')
+        print('-----------------------------------------')
+        print(ball_cam0)
+        print(ball_cam1)
+        print('ball_3D_temp')
+        print(ball_3D_temp)
+        print('ball_3D')
+        print(ball_3D)
 
 
 def predict():
@@ -235,7 +253,7 @@ def reset_params():
 if __name__ == '__main__':
 
     udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    os.chdir('C:\Example\PingPong_Vision')
+    os.chdir('C:/Users/User/Desktop/Dev/tabletennis_robot')
 
 # -----------------------------------------------초기값 UDP Send---------------------------------------------------------
 
@@ -248,6 +266,17 @@ if __name__ == '__main__':
 
     global hmin_0, hmax_0, smin_0, smax_0, vmin_0, vmax_0
     global hmin_1, hmax_1, smin_1, smax_1, vmin_1, vmax_1
+
+    #set initial color range
+    lower_color = [18, 71, 100]
+    upper_color = [25, 88, 100]
+
+    [hmin_0, smin_0, vmin_0]=lower_color
+    [hmax_0, smax_0, vmax_0]=upper_color
+
+    [hmin_1, smin_1, vmin_1]=lower_color
+    [hmax_1, smax_1, vmax_1]=upper_color
+
 
     temp_0 = 1
     i = 0
@@ -359,67 +388,47 @@ if __name__ == '__main__':
     cap0.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
     cap0.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
     cap0.set(cv2.CAP_PROP_FRAME_COUNT, 60)
+    cap0.set(cv2.CAP_PROP_POS_MSEC, 11) #set fps approx 90
+    cap0.set(cv2.CAP_PROP_AUTOFOCUS, 0) #turn-off autofocus function
 
     w_0 = int(cap0.get(cv2.CAP_PROP_FRAME_WIDTH))
     h_0 = int(cap0.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-    print(w_0, h_0)
+    print("the width and height of the CAM0: ", w_0, h_0)
 
     # Camera1_Setting
 
     cap1.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
     cap1.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
     cap1.set(cv2.CAP_PROP_FRAME_COUNT, 60)
+    cap1.set(cv2.CAP_PROP_POS_MSEC, 11)
+    cap1.set(cv2.CAP_PROP_AUTOFOCUS, 0) 
 
     w_1 = int(cap0.get(cv2.CAP_PROP_FRAME_WIDTH))
     h_1 = int(cap0.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-    print(w_1, h_1)
+    print("the width and height of the CAM1: ", w_1, h_1)
 
     mask0 = cv2.imread('cam0_mask_cali_v2.jpg', cv2.IMREAD_GRAYSCALE)
     mask1 = cv2.imread('cam1_mask_cali_v2.jpg', cv2.IMREAD_GRAYSCALE)
 
     # cv2.namedWindow('src')
 
-    cv2.namedWindow('dst_0')
-    cv2.namedWindow('dst_1')
+    # cv2.namedWindow('dst_0') #dst_0 is the mask(gray scale) of the ball
+    # cv2.namedWindow('dst_1')
 
-    # Set Trackbar
-
-    cv2.createTrackbar('H_min_0', 'dst_0', 0, 255, nothing)
-    cv2.setTrackbarPos('H_min_0', 'dst_0', 0)
-    cv2.createTrackbar('H_max_0', 'dst_0', 0, 255, nothing)
-    cv2.setTrackbarPos('H_max_0', 'dst_0', 255)
-    cv2.createTrackbar('S_min_0', 'dst_0', 0, 255, nothing)
-    cv2.setTrackbarPos('S_min_0', 'dst_0', 0)
-    cv2.createTrackbar('S_max_0', 'dst_0', 0, 255, nothing)
-    cv2.setTrackbarPos('S_max_0', 'dst_0', 255)
-    cv2.createTrackbar('V_min_0', 'dst_0', 0, 255, nothing)
-    cv2.setTrackbarPos('V_min_0', 'dst_0', 0)
-    cv2.createTrackbar('V_max_0', 'dst_0', 0, 255, nothing)
-    cv2.setTrackbarPos('V_max_0', 'dst_0', 255)
-
-    cv2.createTrackbar('H_min_1', 'dst_1', 0, 255, nothing)
-    cv2.setTrackbarPos('H_min_1', 'dst_1', 0)
-    cv2.createTrackbar('H_max_1', 'dst_1', 0, 255, nothing)
-    cv2.setTrackbarPos('H_max_1', 'dst_1', 255)
-    cv2.createTrackbar('S_min_1', 'dst_1', 0, 255, nothing)
-    cv2.setTrackbarPos('S_min_1', 'dst_1', 0)
-    cv2.createTrackbar('S_max_1', 'dst_1', 0, 255, nothing)
-    cv2.setTrackbarPos('S_max_1', 'dst_1', 255)
-    cv2.createTrackbar('V_min_1', 'dst_1', 0, 255, nothing)
-    cv2.setTrackbarPos('V_min_1', 'dst_1', 0)
-    cv2.createTrackbar('V_max_1', 'dst_1', 0, 255, nothing)
-    cv2.setTrackbarPos('V_max_1', 'dst_1', 255)
 
     # 연산 시간 측정
     tm = cv2.TickMeter()
+    
+    # the standard for printing current state
+    print_std=0 
 
     while True:
 
         tm.reset()
         tm.start()
-        vision_set()
+        vision_set(print_std)
 
         if (ball_3D[0] - ball_3D_temp[0]) > 0:
             predict()
@@ -430,22 +439,28 @@ if __name__ == '__main__':
             print('break!')
             break
 
-        if ball_3D[0] >= 1600:
+        if ball_3D[0] >= 1600: #maybe std at which the robot should impact
             impact = 1
         else:
             impact = 0
 
-        print('impact')
-        print(impact)
+        if print_std%45==0:
+            print('impact')
+            print(impact)
         data_impact = str(impact)
         udp_socket.sendto(data_impact.encode(), ('172.25.142.24', 3333))
 
         ball_3D_temp = ball_3D
 
-        print(temp_0)
+        if print_std%45==0:
+            print(temp_0)
 
         tm.stop()
-        print('Calc time : {}ms.'.format(tm.getTimeMilli()))
+        if print_std%45==0:
+            print('Calc time : {}ms.'.format(tm.getTimeMilli()))
+            print_std=0
+
+        print_std+=1
 
     cv2.destroyAllWindows()
     cap0.release()
