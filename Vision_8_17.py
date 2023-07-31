@@ -72,6 +72,19 @@ def vision_set(print_std):
     cv2.imshow('src_0', src_0)
     cv2.imshow('src_1', src_1)
 
+    #show current 3D points through mouse click
+    cv2.imshow('current_point0', src_0)
+    cv2.imshow('current_point1', src_1)
+
+    cv2.setMouseCallback('current_point0', print_3D, 0)
+    cv2.setMouseCallback('current_point1', print_3D, 1)
+
+    def print_3D(event, x, y, flags, params):
+        global ball_3D
+        if event == cv2.EVENT_LBUTTONDBLCLK:
+            print(f"current point of cam{params}: ", ball_3D)
+
+
     src_hsv_0 = cv2.cvtColor(src_0, cv2.COLOR_BGR2HSV)
     src_hsv_1 = cv2.cvtColor(src_1, cv2.COLOR_BGR2HSV)
 
