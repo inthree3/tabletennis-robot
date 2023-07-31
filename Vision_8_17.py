@@ -47,6 +47,12 @@ def click_color_1(event, x, y, flags, params):
         [hmax_1, smax_1, vmax_1]=upper_color
         print("Selected HSV Range is ", lower_color, upper_color)
 
+#function for showing the current 3D point
+def print_3D(event, x, y, flags, params):
+        global ball_3D
+        if event == cv2.EVENT_LBUTTONDBLCLK:
+            print(f"current point of cam{params}: ", ball_3D)
+
 
 def vision_set(print_std):
     # while True:
@@ -78,11 +84,6 @@ def vision_set(print_std):
 
     cv2.setMouseCallback('current_point0', print_3D, 0)
     cv2.setMouseCallback('current_point1', print_3D, 1)
-
-    def print_3D(event, x, y, flags, params):
-        global ball_3D
-        if event == cv2.EVENT_LBUTTONDBLCLK:
-            print(f"current point of cam{params}: ", ball_3D)
 
 
     src_hsv_0 = cv2.cvtColor(src_0, cv2.COLOR_BGR2HSV)
@@ -316,44 +317,43 @@ if __name__ == '__main__':
     #R0 = np.linalg.inv(np.array([[-0.6403, -0.6730, -1.4113], 
      #                            [-0.5477, -0.5929, -1.4882], 
       #                           [-0.4374, -0.4086 , -1.4703]]))
-    r0 = np.array([-0.6668007, -0.48129638, 1.40815667])
-    r1 = np.array([-0.0701413, 0.84496778, 2.963346])
+    r0 = np.array([-0.23459253, 0.68013485, 3.04716386])
+    r1 = np.array([-0.24140184, -0.03802079, 0.0033663])
 
     R0, _ = cv2.Rodrigues(r0)
     R1, _ = cv2.Rodrigues(r1)
     
-    T0 = np.array([13.35128918, 4.80785346, 64.68655925])
-    T1 = np.array([-0.38225996, 0.99411966, 13.37263133])
+    T0 = np.array([4.18247759, 15.97262761, 44.36656142])
+    T1 = np.array([-2.70205959, 11.48478121, 25.77444696])
 
     # Translation Matrix between each cam & World Coord
     # Focal length of each cam
 
-    cam0_f = np.array([766.8537, 769.1458])
-    cam1_f = np.array([509.5084, 507.6457])
+    cam0_f = np.array([791.7321, 842.5760])
+    cam1_f = np.array([419.4296, 384.6875])
 
     # Principle Point of each cam
 
-    cam0_c = np.array([647.6205, 345.3208])
-    cam1_c = np.array([313.1442, 244.8337])
+    cam0_c = np.array([664.9586, 356.4415])
+    cam1_c = np.array([647.8114, 358.0928])
 
     # Distortion
 
-    cam0_dist_r = np.array([0.1313, -0.2132])
+    cam0_dist_r = np.array([-0.1408, 0.0091])
     cam0_dist_t = np.array([0, 0])
-    cam1_dist_r = np.array([0.1331, -0.2226])
+    cam1_dist_r = np.array([-1.0359, -2.1435])
     cam1_dist_t = np.array([0, 0])
 
     # Intrinsics Matrix
 
-    cam0_int = np.array([[778.03379157, 0., 652.68977971], [0., 778.19712171, 370.48020828], [0.,  0., 1.]])
-    cam1_int = np.array([[509.50837051, 0., 313.14423307], [0., 507.64569231, 244.83368204], [0., 0., 1.]])
+    cam0_int = np.array([[791.73211828, 0, 664.95863988], [0, 842.57596176, 356.44151064], [0, 0, 1]])
+    cam1_int = np.array([[419.42956521, 0, 647.81142458], [0, 384.68748757, 358.09277594], [0, 0, 1]])
 
     mtx0 = cam0_int
     mtx1 = cam1_int
 
-    dist0 = np.array([0.22928257, -0.45419591,  0.00182889,  0.00148427,  0.13923846]) #hstack: 가로로 두 array 붙이는 연산
-    dist1 = np.array([1.31360056e+01, -2.92892275e+02, 5.44147704e-01,  2.32045256e-01,
-   2.58058485e+03])
+    dist0 = np.array([0.65431131, 0.49894282, -0.14079931, 0.00907266, -5.05880803]) #hstack: 가로로 두 array 붙이는 연산
+    dist1 = np.array([4.89533768e-01, 5.25564638e-01, -1.03593340e-01, -2.14348809e-03, -4.89983865e+00])
 
     print('intrinsics Matrix')
     print('')
