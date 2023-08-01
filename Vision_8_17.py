@@ -197,7 +197,7 @@ def predict():
     global slope, slope_temp
     global y_p
 
-    if temp_0 == 1 and ball_3D[0] > 400:
+    if temp_0 == 1 and ball_3D[1] > :
         ball_array[:, 0:1] = ball_3D
 
         slope = (ball_array[1, 0] - 0) / (ball_array[0, 0] - 150)
@@ -248,9 +248,9 @@ def predict():
 
 # ---------------------------------------------------Data Send----------------------------------------------------------
         data = str((5000 + int(-y_p)) * 10000 + step * 1000 + 0)
-        udp_socket.sendto(data.encode(), ('172.25.142.24', 9999))
+        udp_socket.sendto(data.encode(), (ip_address, 9999))
 
-    if temp_0 == 1 and ball_3D[0] > 150:
+    if temp_0 == 1 and ball_3D[1] > 150:
         temp_0 = 0
 
 
@@ -268,7 +268,7 @@ def reset_params():
     slope = 0
     slope_temp = 0
     data_reset = str(50000000)
-    udp_socket.sendto(data_reset.encode(), ('172.25.142.24', 9999))
+    udp_socket.sendto(data_reset.encode(), (ip_address, 9999))
     print('reset!')
 
 
@@ -279,10 +279,11 @@ if __name__ == '__main__':
 
 # -----------------------------------------------초기값 UDP Send---------------------------------------------------------
 
+    ip_address="172.17.27.22"
     data_zero = str(50000000)
-    udp_socket.sendto(data_zero.encode(), ('172.25.142.24', 9999))
+    udp_socket.sendto(data_zero.encode(), (ip_address, 9999))
     data_impact = str(0)
-    udp_socket.sendto(data_impact.encode(), ('172.25.142.24', 3333))
+    udp_socket.sendto(data_impact.encode(), (ip_address, 3333))
 
     # Set Global Variables
 
@@ -329,12 +330,12 @@ if __name__ == '__main__':
     # Translation Matrix between each cam & World Coord
     # Focal length of each cam
 
-    cam0_f = np.array([791.7321, 842.5760])
+    cam0_f = np.array([535.90786742, 530.60972232])
     cam1_f = np.array([419.4296, 384.6875])
 
     # Principle Point of each cam
 
-    cam0_c = np.array([664.9586, 356.4415])
+    cam0_c = np.array([655.77404621, 354.47028656])
     cam1_c = np.array([647.8114, 358.0928])
 
     # Distortion
@@ -346,14 +347,14 @@ if __name__ == '__main__':
 
     # Intrinsics Matrix
 
-    cam0_int = np.array([[783.89487299, 0., 673.87675856], [0., 787.96916992, 388.49312521], [0., 0., 1.]])
-    cam1_int = np.array([[780.59897509, 0., 601.20674623], [0., 778.45888298, 363.29679896], [0., 0., 1.]])
+    cam0_int = np.array([[783.89487299, 0, 673.87675856], [0, 787.96916992, 388.49312521], [0, 0, 1]])
+    cam1_int = np.array([[784.08203396, 0., 595.52834178], [0., 781.30731967, 365.24995514], [0., 0., 1.]])
 
     mtx0 = cam0_int
     mtx1 = cam1_int
 
     dist0 = np.array([0.2724565, -0.65692629, 0.01741777, 0.00634816, 0.37098618]) #hstack: 가로로 두 array 붙이는 연산
-    dist1 = np.array([0.26403536, -0.53309552, -0.00651345, -0.01530395, 0.31483086])
+    dist1 = np.array([0.27610058, -0.53822435, -0.00619961, -0.01892479, 0.31669127])
 
     print('intrinsics Matrix')
     print('')
@@ -477,7 +478,7 @@ if __name__ == '__main__':
             print('impact')
             print(impact)
         data_impact = str(impact)
-        udp_socket.sendto(data_impact.encode(), ('172.25.142.24', 3333))
+        udp_socket.sendto(data_impact.encode(), (ip_address, 3333))
 
         ball_3D_temp = ball_3D
 
