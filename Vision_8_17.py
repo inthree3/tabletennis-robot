@@ -178,7 +178,7 @@ def vision_set(print_std):
     cv2.imshow('dst_1', dst_1)
     cv2.imshow('img_result_1', img_result_1)
 
-    if print_std%22==0:
+    if print_std%5==0:
         print('')
         print('-----------------------------------------')
         print(ball_cam0)
@@ -317,14 +317,14 @@ if __name__ == '__main__':
     #R0 = np.linalg.inv(np.array([[-0.6403, -0.6730, -1.4113], 
      #                            [-0.5477, -0.5929, -1.4882], 
       #                           [-0.4374, -0.4086 , -1.4703]]))
-    r0 = np.array([-0.23459253, 0.68013485, 3.04716386])
-    r1 = np.array([-0.24140184, -0.03802079, 0.0033663])
+    r0 = np.array([-0.08196, 0.41632342, 3.10042661])
+    r1 = np.array([-0.06858176, 1.389907, 2.78486924])
 
     R0, _ = cv2.Rodrigues(r0)
     R1, _ = cv2.Rodrigues(r1)
     
-    T0 = np.array([4.18247759, 15.97262761, 44.36656142])
-    T1 = np.array([-2.70205959, 11.48478121, 25.77444696])
+    T0 = np.array([1.48079843, 6.07775434, 24.29342169])
+    T1 = np.array([6.27299391, 4.01877434, 24.29342169])
 
     # Translation Matrix between each cam & World Coord
     # Focal length of each cam
@@ -346,14 +346,14 @@ if __name__ == '__main__':
 
     # Intrinsics Matrix
 
-    cam0_int = np.array([[791.73211828, 0, 664.95863988], [0, 842.57596176, 356.44151064], [0, 0, 1]])
-    cam1_int = np.array([[419.42956521, 0, 647.81142458], [0, 384.68748757, 358.09277594], [0, 0, 1]])
+    cam0_int = np.array([[783.89487299, 0., 673.87675856], [0., 787.96916992, 388.49312521], [0., 0., 1.]])
+    cam1_int = np.array([[780.59897509, 0., 601.20674623], [0., 778.45888298, 363.29679896], [0., 0., 1.]])
 
     mtx0 = cam0_int
     mtx1 = cam1_int
 
-    dist0 = np.array([0.65431131, 0.49894282, -0.14079931, 0.00907266, -5.05880803]) #hstack: 가로로 두 array 붙이는 연산
-    dist1 = np.array([4.89533768e-01, 5.25564638e-01, -1.03593340e-01, -2.14348809e-03, -4.89983865e+00])
+    dist0 = np.array([0.2724565, -0.65692629, 0.01741777, 0.00634816, 0.37098618]) #hstack: 가로로 두 array 붙이는 연산
+    dist1 = np.array([0.26403536, -0.53309552, -0.00651345, -0.01530395, 0.31483086])
 
     print('intrinsics Matrix')
     print('')
@@ -412,6 +412,9 @@ if __name__ == '__main__':
     cap0.set(cv2.CAP_PROP_FRAME_COUNT, 60)
     cap0.set(cv2.CAP_PROP_POS_MSEC, 11) #set fps approx 90
     cap0.set(cv2.CAP_PROP_AUTOFOCUS, 0) #turn-off autofocus function
+    cap0.set(cv2.CAP_PROP_FPS, 90)
+    # cap0.set(cv2.CAP_PROP_EXPOSURE, -6)
+    # cap0.set(cv2.CAP_PROP_BRIGHTNESS, 500)
 
     w_0 = int(cap0.get(cv2.CAP_PROP_FRAME_WIDTH))
     h_0 = int(cap0.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -424,7 +427,10 @@ if __name__ == '__main__':
     cap1.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
     cap1.set(cv2.CAP_PROP_FRAME_COUNT, 60)
     cap1.set(cv2.CAP_PROP_POS_MSEC, 11)
-    cap1.set(cv2.CAP_PROP_AUTOFOCUS, 0) 
+    cap1.set(cv2.CAP_PROP_AUTOFOCUS, 0)
+    cap1.set(cv2.CAP_PROP_FPS, 90)
+    # cap1.set(cv2.CAP_PROP_EXPOSURE, -6)
+    # cap1.set(cv2.CAP_PROP_BRIGHTNESS, 500)
 
     w_1 = int(cap0.get(cv2.CAP_PROP_FRAME_WIDTH))
     h_1 = int(cap0.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -444,7 +450,8 @@ if __name__ == '__main__':
     tm = cv2.TickMeter()
     
     # the standard for printing current state
-    print_std=0 
+    print_std=0
+    print_now=5
 
     while True:
 
@@ -452,7 +459,7 @@ if __name__ == '__main__':
         tm.start()
         vision_set(print_std)
 
-        if (ball_3D[0] - ball_3D_temp[0]) > 0:
+        if (ball_3D[1] - ball_3D_temp[1]) > 0:
             predict()
 
         if cv2.waitKey(1) & 0xFF == ord('r'):
@@ -461,12 +468,12 @@ if __name__ == '__main__':
             print('break!')
             break
 
-        if ball_3D[0] >= 1600: #maybe std at which the robot should impact
+        if ball_3D[1] >= 12: #maybe std at which the robot should impact
             impact = 1
         else:
             impact = 0
 
-        if print_std%22==0:
+        if print_std%print_now==0:
             print('impact')
             print(impact)
         data_impact = str(impact)
@@ -474,11 +481,11 @@ if __name__ == '__main__':
 
         ball_3D_temp = ball_3D
 
-        if print_std%22==0:
+        if print_std%print_now==0:
             print(temp_0)
 
         tm.stop()
-        if print_std%22==0:
+        if print_std%print_now==0:
             print('Calc time : {}ms.'.format(tm.getTimeMilli()))
             print_std=0
 
