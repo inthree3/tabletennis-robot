@@ -79,11 +79,11 @@ def vision_set(print_std):
     cv2.imshow('src_1', src_1)
 
     #show current 3D points through mouse click
-    cv2.imshow('current_point0', src_0)
-    cv2.imshow('current_point1', src_1)
+    # cv2.imshow('current_point0', src_0)
+    # cv2.imshow('current_point1', src_1)
 
-    cv2.setMouseCallback('current_point0', print_3D, 0)
-    cv2.setMouseCallback('current_point1', print_3D, 1)
+    # cv2.setMouseCallback('current_point0', print_3D, 0)
+    # cv2.setMouseCallback('current_point1', print_3D, 1)
 
 
     src_hsv_0 = cv2.cvtColor(src_0, cv2.COLOR_BGR2HSV)
@@ -160,23 +160,22 @@ def vision_set(print_std):
             ball_cam1 = np.array([centroid[0], centroid[1]], dtype=float)
 
     if ball_cam0[0] != 0 and ball_cam1[0] != 0:
-
+        # ball_3D=[x, y, z]
         ball_tri = np.array(cv2.triangulatePoints(P0, P1, ball_cam0, ball_cam1))
         ball_3D = ball_tri[:3] / ball_tri[-1]
 
     else:
-
         ball_3D = ball_3D_temp
 
     # Display
 
     cv2.imshow('src_0', src_0)
-    cv2.imshow('dst_0', dst_0)
-    cv2.imshow('img_result_0', img_result_0)
+    # cv2.imshow('dst_0', dst_0)
+    # cv2.imshow('img_result_0', img_result_0)
 
     cv2.imshow('src_1', src_1)
-    cv2.imshow('dst_1', dst_1)
-    cv2.imshow('img_result_1', img_result_1)
+    # cv2.imshow('dst_1', dst_1)
+    # cv2.imshow('img_result_1', img_result_1)
 
     if print_std%5==0:
         print('')
@@ -194,63 +193,67 @@ def predict():
     global ball_array
     global temp_0
     global ball_3D, ball_3D_temp
-    global slope, slope_temp
-    global y_p
+    global slope, slope_temp #only 'slope' is used
+    global x_p
 
-    if temp_0 == 1 and ball_3D[1] > :
+    #the condition at which the ball is going over the net (temp_0==1)
+    if temp_0 == 1 and ball_3D[1] > 160:
         ball_array[:, 0:1] = ball_3D
 
-        slope = (ball_array[1, 0] - 0) / (ball_array[0, 0] - 150)
-        y_p = slope * (2500 - 150) + 0
+        slope_send = (ball_array[1, 0] - 0) / (ball_array[0, 0] - 0)
+        slope = (ball_array[0, 0] - 0) / (ball_array[1, 0] - 0)
+        x_p = slope * 24 + 0
 
 # ---------------------------------------------------y_p calc-----------------------------------------------------------
 
-        if y_p > 470:
-            y_p = 470
+        if x_p > 470:
+            x_p = 470
 
-        elif y_p < -470:
-            y_p = -470
+        elif x_p < -470:
+            x_p = -470
 
 # ----------------------------------------------------Step Calc---------------------------------------------------------
 
-        if 0 < abs(slope) < 0.04:
-            step = 1
+        # if 0 < abs(slope) < 0.04:
+        #     step = 1
 
-        elif 0.04 < abs(slope) < 0.08:
-            step = 2
+        # elif 0.04 < abs(slope) < 0.08:
+        #     step = 2
 
-        elif 0.08 < abs(slope) < 0.12:
-            step = 3
+        # elif 0.08 < abs(slope) < 0.12:
+        #     step = 3
 
-        elif 0.12 < abs(slope) < 0.16:
-            step = 4
+        # elif 0.12 < abs(slope) < 0.16:
+        #     step = 4
 
-        else:
-            step = 5
+        # else:
+        #     step = 5
 
-        if -470 <= y_p < -200:
-            y_p = -380
+        # if -470 <= y_p < -200:
+        #     y_p = -380
 
-        elif -200 <= y_p < 200:
-            y_p = -25
+        # elif -200 <= y_p < 200:
+        #     y_p = -25
 
-        elif 200 <= y_p <= 470:
-            y_p = 380
+        # elif 200 <= y_p <= 470:
+        #     y_p = 380
 
 # -----------------------------------------------------print------------------------------------------------------------
 
         print(ball_array[:, 0])
         print(ball_array[:, 1])
         print('predict_result')
-        print(y_p)
+        print(x_p)
         print(slope)
-        print((5000+int(-y_p))*10000+step*1000+0)
+        # print((5000+int(-y_p))*10000+step*1000+0)
 
 # ---------------------------------------------------Data Send----------------------------------------------------------
-        data = str((5000 + int(-y_p)) * 10000 + step * 1000 + 0)
+        data = str(x_p*4) #1000 부분을 조절해서, y를 맞춰야함
+        data=0 #fix well for good clear x_p
+
         udp_socket.sendto(data.encode(), (ip_address, 9999))
 
-    if temp_0 == 1 and ball_3D[1] > 150:
+    if temp_0 == 1 and ball_3D[1] > 0:
         temp_0 = 0
 
 
@@ -261,7 +264,7 @@ def reset_params():
     global temp_0
     global ball_array
 
-    ball_array = np.zeros((3, 2))
+    ball_array = np.zeros((3, 2)) # [[0,0],[0,0],[0,0]]
     temp_0 = 1
     ball_3D = np.zeros((3, 1))
     ball_3D_temp = np.zeros((3, 1))
@@ -279,7 +282,7 @@ if __name__ == '__main__':
 
 # -----------------------------------------------초기값 UDP Send---------------------------------------------------------
 
-    ip_address="172.17.27.22"
+    ip_address="172.17.26.156"
     data_zero = str(50000000)
     udp_socket.sendto(data_zero.encode(), (ip_address, 9999))
     data_impact = str(0)
@@ -338,23 +341,16 @@ if __name__ == '__main__':
     cam0_c = np.array([655.77404621, 354.47028656])
     cam1_c = np.array([647.8114, 358.0928])
 
-    # Distortion
-
-    cam0_dist_r = np.array([-0.1408, 0.0091])
-    cam0_dist_t = np.array([0, 0])
-    cam1_dist_r = np.array([-1.0359, -2.1435])
-    cam1_dist_t = np.array([0, 0])
-
     # Intrinsics Matrix
 
     cam0_int = np.array([[783.89487299, 0, 673.87675856], [0, 787.96916992, 388.49312521], [0, 0, 1]])
-    cam1_int = np.array([[784.08203396, 0., 595.52834178], [0., 781.30731967, 365.24995514], [0., 0., 1.]])
+    cam1_int = np.array([[814.49848129, 0., 568.49302368], [0., 805.90235641, 369.59529032], [0., 0., 1.]])
 
     mtx0 = cam0_int
     mtx1 = cam1_int
 
     dist0 = np.array([0.2724565, -0.65692629, 0.01741777, 0.00634816, 0.37098618]) #hstack: 가로로 두 array 붙이는 연산
-    dist1 = np.array([0.27610058, -0.53822435, -0.00619961, -0.01892479, 0.31669127])
+    dist1 = np.array([0.3166118, -0.49218699, -0.0046719, -0.03840587, 0.25442361])
 
     print('intrinsics Matrix')
     print('')
@@ -416,6 +412,7 @@ if __name__ == '__main__':
     cap0.set(cv2.CAP_PROP_FPS, 90)
     # cap0.set(cv2.CAP_PROP_EXPOSURE, -6)
     # cap0.set(cv2.CAP_PROP_BRIGHTNESS, 500)
+    print("the cap0 fps: ", cap0.get(cv2.CAP_PROP_FPS))
 
     w_0 = int(cap0.get(cv2.CAP_PROP_FRAME_WIDTH))
     h_0 = int(cap0.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -432,6 +429,7 @@ if __name__ == '__main__':
     cap1.set(cv2.CAP_PROP_FPS, 90)
     # cap1.set(cv2.CAP_PROP_EXPOSURE, -6)
     # cap1.set(cv2.CAP_PROP_BRIGHTNESS, 500)
+    print("the cap1 fps: ", cap1.get(cv2.CAP_PROP_FPS))
 
     w_1 = int(cap0.get(cv2.CAP_PROP_FRAME_WIDTH))
     h_1 = int(cap0.get(cv2.CAP_PROP_FRAME_HEIGHT))
