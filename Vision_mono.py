@@ -156,8 +156,10 @@ def predict():
 
     # x_p = slope * 24 + 0
     j=0
-    x_p = slope * (-844) * 0.3
+    x_p = slope * (-844) * 0.3+13
+
     
+
 
     if impact==1 and cnt > 0:
         print("impact detection succeeded")
@@ -168,7 +170,10 @@ def predict():
         print("ball_array_y", ball_array[1][1])
         print("current x" , ball_array[1][0])
         print("result x_p: ", x_p)
-    
+        udp_socket.sendto(str(x_p).encode(), (ip_address, 9999))
+        udp_socket.sendto(str(data_impact).encode(), (ip_address, 3333))
+        udp_socket.sendto(str(0).encode(), (ip_address, 3333))
+
 # ---------------------------------------------------y_p calc-----------------------------------------------------------
 
     if x_p > 55:
@@ -211,13 +216,15 @@ def predict():
     # print((5000+int(-y_p))*10000+step*1000+0)
 
 # ---------------------------------------------------Data Send----------------------------------------------------------
-    data = str(x_p) #1000 부분을 조절해서, y를 맞춰야함
+    #data = str(x_p) #1000 부분을 조절해서, y를 맞춰야함
     # data=str(0) #fix well for good clear x_p
 
-    if impact == 1:
-        udp_socket.sendto(data.encode(), (ip_address, 9999))
+    #if impact == 1 and cnt > 0:
+     #   udp_socket.sendto(data.encode(), (ip_address, 9999))
 
-        udp_socket.sendto(str(impact).encode(), (ip_address, 3333))  # 강민석이 단거임
+     #  udp_socket.sendto(str(impact).encode(), (ip_address, 3333))  # 강민석이 단거임
+#
+ #       udp_socket.sendto(str(0).encode(), (ip_address, 3333))
 
 
 
@@ -414,10 +421,6 @@ if __name__ == '__main__':
             print("impact: ", impact)
 
         print("cnt : ", cnt)
-
-        if cnt > 0 and impact == 1:
-            data_impact = str(impact)
-            udp_socket.sendto(data_impact.encode(), (ip_address, 3333))
 
 
 
