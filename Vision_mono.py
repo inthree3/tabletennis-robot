@@ -43,6 +43,7 @@ def vision_set(print_std):
 
     cv2.imshow('src_1', frame_1)
     src_1 = cv2.remap(frame_1, mapx1, mapy1, cv2.INTER_LINEAR)
+    src_1 = cv2.copyTo(src_1, mask1)
 
     #show current 3D points through mouse click
     # cv2.imshow('current_point0', src_0) 
@@ -64,23 +65,23 @@ def vision_set(print_std):
 
 
     # Detecting Color Setting
-    dst_1 = cv2.inRange(src_hsv_1, (hmin_1, smin_1, vmin_1), (hmax_1, smax_1, vmax_1))
+    # dst_1 = cv2.inRange(src_hsv_1, (hmin_1, smin_1, vmin_1), (hmax_1, smax_1, vmax_1))
 
     # cv2.imshow('dst_0', dst_0)
     # cv2.imshow('dst_1', dst_1)
 
     # MORPH 함수 이용하여 정확도 향상(Value Optimization)
-    # kernel = np.ones((3, 3), np.uint8)
+    kernel = np.ones((3, 3), np.uint8)
     # dst_0 = cv2.morphologyEx(dst_0, cv2.MORPH_OPEN, kernel)
     # dst_0 = cv2.morphologyEx(dst_0, cv2.MORPH_CLOSE, kernel)
-    # dst_1 = cv2.morphologyEx(dst_1, cv2.MORPH_OPEN, kernel)
-    # dst_1 = cv2.morphologyEx(dst_1, cv2.MORPH_CLOSE, kernel)
+    mask1 = cv2.morphologyEx(mask1, cv2.MORPH_OPEN, kernel)
+    mask1 = cv2.morphologyEx(mask1, cv2.MORPH_CLOSE, kernel)
 
     # 마스크 이미지로 원본 이미지에서 범위값에 해당되는 영상 부분을 획득
 
-    img_result_1 = cv2.bitwise_and(src_1, src_1, mask=dst_1)
+    img_result_1 = cv2.bitwise_and(src_1, src_1, mask=mask1)
 
-    numOfLabels_1, img_label_1, stats_1, centroids_1 = cv2.connectedComponentsWithStats(dst_1)
+    numOfLabels_1, img_label_1, stats_1, centroids_1 = cv2.connectedComponentsWithStats(mask1)
 
     # centroids==무게중심 좌표(x,y)
 
@@ -349,7 +350,7 @@ if __name__ == '__main__':
     # cap1.set(cv2.CAP_PROP_BRIGHTNESS, 500)
     print("the cap1 fps: ", cap1.get(cv2.CAP_PROP_FPS))
 
-    mask1 = cv2.imread('cam1_mask_cali_v2.jpg', cv2.IMREAD_GRAYSCALE)
+    mask1 = cv2.imread('cam0_mask_cali_v2.jpg', cv2.IMREAD_GRAYSCALE)
 
     # cv2.namedWindow('src')
 
