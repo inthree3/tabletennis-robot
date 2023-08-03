@@ -156,10 +156,10 @@ def predict():
 
     # x_p = slope * 24 + 0
     j=0
-    x_p = slope * (-844) * 0.2
+    x_p = slope * (-844) * 0.3
     
 
-    if impact==1:
+    if impact==1 and cnt > 0:
         print("impact detection succeeded")
         print("slope: ", slope)
         print("center_x", centerX)
@@ -217,6 +217,10 @@ def predict():
     if impact == 1:
         udp_socket.sendto(data.encode(), (ip_address, 9999))
 
+        udp_socket.sendto(str(impact).encode(), (ip_address, 3333))  # 강민석이 단거임
+
+
+
 # elif temp_0 == 1 and ball_3D[1] > 11.5:
 #     temp_0 = 0
 
@@ -227,7 +231,6 @@ def reset_params():
     global temp_0
     global ball_array
     global x_p
-    global impact
 
     impact = 0
     ball_array = []
@@ -247,7 +250,7 @@ if __name__ == '__main__':
 
 # -----------------------------------------------초기값 UDP Send---------------------------------------------------------
 
-    ip_address="172.17.27.22"
+    ip_address="172.17.26.156"
     data_zero = str(50000000)
     udp_socket.sendto(data_zero.encode(), (ip_address, 9999))
     data_impact = str(0)
@@ -258,6 +261,7 @@ if __name__ == '__main__':
     global hmin_1, hmax_1, smin_1, smax_1, vmin_1, vmax_1
     global impact
     global centerX, centerY
+    global cnt
 
     #set initial color range
     lower_color = [0, 87, 89]
@@ -269,7 +273,6 @@ if __name__ == '__main__':
 
 
     temp_0 = 1
-    i = 0
     y_p = 0
     slope = 0
     slope_temp = 0
@@ -379,6 +382,7 @@ if __name__ == '__main__':
     # the standard for printing current state
     print_std=0
     print_now=50
+    cnt = 2
 
     while True:
 
@@ -395,9 +399,10 @@ if __name__ == '__main__':
 
         if centerY < 150 and [centerX, centerY]!=[0,0]: #maybe std at which the robot should impact
             impact = 1
-            i += 1
+            cnt = cnt - 1
         else :
             impact = 0
+            cnt = 2
 
         predict()
 
@@ -408,8 +413,9 @@ if __name__ == '__main__':
         if print_std%print_now==0:
             print("impact: ", impact)
 
-        
-        if i == 1 and impact == 1:
+        print("cnt : ", cnt)
+
+        if cnt > 0 and impact == 1:
             data_impact = str(impact)
             udp_socket.sendto(data_impact.encode(), (ip_address, 3333))
 
