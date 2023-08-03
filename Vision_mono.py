@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import os
 import socket
+import time
 
 
 def nothing(x):
@@ -94,14 +95,16 @@ def vision_set(print_std):
             continue
 
         x, y, width, height, area = stats_1[idx]
-        centerX, centerY = int(centroid[0]), int(centroid[1])
+        
 
         if 100 < area < 5000:
             # 일정 범위 이상 & 이하인 부분에 대해서만 centroids 값 반환
-            cv2.circle(src_1, (centerX, centerY), 10, (0, 0, 255), 10)
+            cv2.circle(src_1, (int(centerX), int(centerY)), 10, (0, 0, 255), 10)
             cv2.rectangle(src_1, (x, y), (x + width, y + height), (0, 0, 255))
             ball_cam1 = np.array([centroid[0], centroid[1]], dtype=float)
 
+        centerX = ball_cam1[0]
+        centerY = ball_cam1[1]
 
     # Display
 
@@ -116,6 +119,8 @@ def vision_set(print_std):
         print('')
         print('-----------------------------------------')
         print(ball_cam1)
+        print("centerX :", centerX)
+        print("centerY :", centerY)
 
 
 
@@ -128,7 +133,6 @@ def predict():
     global i, j
     global impact
 
-    impact = 0
 
     #the condition at which the ball is going over the net (temp_0==1)
     # print("temp_0 : ", temp_0)
@@ -153,7 +157,10 @@ def predict():
     # x_p = slope * 24 + 0
     j=0
     x_p = slope * (-844) * 0.2
+    
+
     if impact==1:
+        print("impact detection succeeded")
         print("slope: ", slope)
         print("center_x", centerX)
         print("center_y", centerY)
@@ -161,6 +168,7 @@ def predict():
         print("ball_array_y", ball_array[1][1])
         print("current x" , ball_array[1][0])
         print("result x_p: ", x_p)
+    
 # ---------------------------------------------------y_p calc-----------------------------------------------------------
 
     if x_p > 55:
@@ -228,7 +236,7 @@ def reset_params():
     slope_temp = 0
     curr_p=[0,0]
     prev_p=[0,0]
-    data_reset = str(50000000)
+    data_reset = str(-50000000)
     udp_socket.sendto(data_reset.encode(), (ip_address, 9999))
     print('reset!')
 
@@ -248,6 +256,8 @@ if __name__ == '__main__':
     # Set Global Variables
 
     global hmin_1, hmax_1, smin_1, smax_1, vmin_1, vmax_1
+    global impact
+    global centerX, centerY
 
     #set initial color range
     lower_color = [0, 87, 89]
@@ -263,9 +273,10 @@ if __name__ == '__main__':
     y_p = 0
     slope = 0
     slope_temp = 0
-    centerY=0
-    centerX=0
+    centerY=480
+    centerX=760
     ball_array = [[0,0],[0,0]]
+    impact=0
 
     i_main = 0
     h, w = np.array([720, 1280])
@@ -375,27 +386,34 @@ if __name__ == '__main__':
         tm.start()
         vision_set(print_std)
 
-        if print_std%print_now==0:
-            print("centerX: ", centerX)
-            print("centerY: ", centerY)
-
-        predict()
-
         if cv2.waitKey(1) & 0xFF == ord('r'):
             reset_params()
         elif cv2.waitKey(1) & 0xFF == 27:
             print('break!')
             break
 
-        if centerY < 110: #maybe std at which the robot should impact
+
+        if centerY < 150 and [centerX, centerY]!=[0,0]: #maybe std at which the robot should impact
             impact = 1
-        else:
+            i += 1
+        else :
             impact = 0
+
+        predict()
+
+        if print_std%print_now==0:
+            print("centerX: ", centerX)
+            print("centerY: ", centerY)
 
         if print_std%print_now==0:
             print("impact: ", impact)
-        data_impact = str(impact)
-        udp_socket.sendto(data_impact.encode(), (ip_address, 3333))
+
+        
+        if i == 1 and impact == 1:
+            data_impact = str(impact)
+            udp_socket.sendto(data_impact.encode(), (ip_address, 3333))
+
+
 
         # if print_std%print_now==0:
         #     print("temp_0: (ignored)", temp_0)
