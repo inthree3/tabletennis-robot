@@ -78,10 +78,10 @@ def vision_set(print_std):
     mask1 = cv2.morphologyEx(mask1, cv2.MORPH_CLOSE, kernel)
 
     # 마스크 이미지로 원본 이미지에서 범위값에 해당되는 영상 부분을 획득
+    dst_1 = cv2.inRange(src_hsv_1, (hmin_1, smin_1, vmin_1), (hmax_1, smax_1, vmax_1))
+    img_result_1 = cv2.bitwise_and(src_1, src_1, mask=dst_1)
 
-    img_result_1 = cv2.bitwise_and(src_1, src_1, mask=mask1)
-
-    numOfLabels_1, img_label_1, stats_1, centroids_1 = cv2.connectedComponentsWithStats(mask1)
+    numOfLabels_1, img_label_1, stats_1, centroids_1 = cv2.connectedComponentsWithStats(dst_1)
 
     # centroids==무게중심 좌표(x,y)
 
@@ -142,10 +142,10 @@ def predict():
     ball_array.append([centerX, centerY])
 
     if ball_array[1][1] - 647 !=0:
-        print("center_x", centerX)
-        print("center_y", centerY)
-        print("ball_array_x", ball_array[1][0])
-        print("ball_array_y", ball_array[1][1])
+        # print("center_x", centerX)
+        # print("center_y", centerY)
+        # print("ball_array_x", ball_array[1][0])
+        # print("ball_array_y", ball_array[1][1])
         slope = (ball_array[1][0] - 646) / (ball_array[1][1] - 647)
     else:
         slope=0
@@ -153,9 +153,13 @@ def predict():
     # x_p = slope * 24 + 0
     j=0
     x_p = slope * (-844) * 0.2
-    if j%20==0:
+    if impact==1:
         print("slope: ", slope)
-        # print("current x" , ball_array[1][0])
+        print("center_x", centerX)
+        print("center_y", centerY)
+        print("ball_array_x", ball_array[1][0])
+        print("ball_array_y", ball_array[1][1])
+        print("current x" , ball_array[1][0])
         print("result x_p: ", x_p)
 # ---------------------------------------------------y_p calc-----------------------------------------------------------
 
@@ -383,7 +387,7 @@ if __name__ == '__main__':
             print('break!')
             break
 
-        if centerY >= 110: #maybe std at which the robot should impact
+        if centerY < 110: #maybe std at which the robot should impact
             impact = 1
         else:
             impact = 0
