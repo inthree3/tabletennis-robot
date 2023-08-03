@@ -246,7 +246,7 @@ def reset_params():
     slope_temp = 0
     curr_p=[0,0]
     prev_p=[0,0]
-    data_reset = str(-50000000)
+    data_reset = str(0)
     udp_socket.sendto(data_reset.encode(), (ip_address, 9999))
     print('reset!')
 
@@ -258,7 +258,7 @@ if __name__ == '__main__':
 # -----------------------------------------------초기값 UDP Send---------------------------------------------------------
 
     ip_address="172.17.27.22"
-    data_zero = str(50000000)
+    data_zero = str(0)
     udp_socket.sendto(data_zero.encode(), (ip_address, 9999))
     data_impact = str(0)
     udp_socket.sendto(data_impact.encode(), (ip_address, 3333))
