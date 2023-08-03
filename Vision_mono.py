@@ -156,7 +156,7 @@ def predict():
 
     # x_p = slope * 24 + 0
     j=0
-    x_p = slope * (-844) * 0.3+13
+    x_p = slope * (-844) * 0.35 + 18
 
     
 
@@ -257,7 +257,7 @@ if __name__ == '__main__':
 
 # -----------------------------------------------초기값 UDP Send---------------------------------------------------------
 
-    ip_address="172.17.26.156"
+    ip_address="172.17.27.22"
     data_zero = str(50000000)
     udp_socket.sendto(data_zero.encode(), (ip_address, 9999))
     data_impact = str(0)
