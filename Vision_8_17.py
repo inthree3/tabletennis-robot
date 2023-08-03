@@ -20,8 +20,8 @@ def click_color_0(event, x, y, flags, params):
         hue=int(hsv_color[0][0][0]) #for cv2.inRange error being resolved
         shade=int(hsv_color[0][0][1])
         value=int(hsv_color[0][0][2])
-        lower_color=[hue-tolerance, shade-tolerance, value-tolerance]
-        upper_color=[hue+tolerance, shade+tolerance, value+tolerance]
+        lower_color=[max(0,hue-tolerance/2), max(0,shade-tolerance), max(0,value-3*tolerance)]
+        upper_color=[min(255, hue+tolerance/2), min(255, shade+3*tolerance), min(255,value+3*tolerance)]
 
         #set the color range as global
         [hmin_0, smin_0, vmin_0]=lower_color
@@ -31,7 +31,7 @@ def click_color_0(event, x, y, flags, params):
 def click_color_1(event, x, y, flags, params):
     #global vars declaration
     global hmin_1, hmax_1, smin_1, smax_1, vmin_1, vmax_1
-    tolerance=35 #set color range width
+    tolerance=40 #set color range width
 
     if event == cv2.EVENT_LBUTTONDBLCLK:
         selected_color=params[y, x]
@@ -39,9 +39,8 @@ def click_color_1(event, x, y, flags, params):
         hue=int(hsv_color[0][0][0]) #for cv2.inRange error being resolved
         shade=int(hsv_color[0][0][1])
         value=int(hsv_color[0][0][2])
-        lower_color=[hue-tolerance, shade-tolerance, value-tolerance]
-        upper_color=[hue+tolerance, shade+tolerance, value+tolerance]
-
+        lower_color=[max(0,hue-tolerance/2), max(0,shade-tolerance), max(0,value-3*tolerance)]
+        upper_color=[min(255, hue+tolerance/2), min(255, shade+3*tolerance), min(255,value+3*tolerance)]
         #set the color range as global
         [hmin_1, smin_1, vmin_1]=lower_color
         [hmax_1, smax_1, vmax_1]=upper_color
@@ -79,7 +78,7 @@ def vision_set(print_std):
     cv2.imshow('src_1', src_1)
 
     #show current 3D points through mouse click
-    # cv2.imshow('current_point0', src_0)
+    # cv2.imshow('current_point0', src_0) 
     # cv2.imshow('current_point1', src_1)
 
     # cv2.setMouseCallback('current_point0', print_3D, 0)
@@ -188,29 +187,32 @@ def vision_set(print_std):
         print(ball_3D)
 
 
+
 def predict():
 
     global ball_array
     global temp_0
     global ball_3D, ball_3D_temp
-    global slope, slope_temp #only 'slope' is used
+    global slope, slope_send, slope_temp #only 'slope' is used
     global x_p
 
     #the condition at which the ball is going over the net (temp_0==1)
-    if temp_0 == 1 and ball_3D[1] > 160:
+    print("temp_0 : ", temp_0)
+
+    if temp_0 == 1 and ball_3D[1] > 0:
         ball_array[:, 0:1] = ball_3D
 
-        slope_send = (ball_array[1, 0] - 0) / (ball_array[0, 0] - 0)
-        slope = (ball_array[0, 0] - 0) / (ball_array[1, 0] - 0)
-        x_p = slope * 24 + 0
+        slope_send = (ball_array[1, 1] - ball_array[1, 0]) / (ball_array[0, 1] - ball_array[0, 0])
+        slope = (ball_array[0, 1] -ball_array[0, 0]) / (ball_array[1, 1] - ball_array[1, 0]) 
 
+        # x_p = slope * 24 + 0
+        x_p = slope*(ball_array[1, 1] - ball_array[1, 0]) + ball_array[0, 0]
 # ---------------------------------------------------y_p calc-----------------------------------------------------------
 
-        if x_p > 470:
-            x_p = 470
-
-        elif x_p < -470:
-            x_p = -470
+        if x_p > 10:
+            x_p = 10
+        elif x_p < -10:
+            x_p = -10
 
 # ----------------------------------------------------Step Calc---------------------------------------------------------
 
@@ -240,21 +242,21 @@ def predict():
 
 # -----------------------------------------------------print------------------------------------------------------------
 
-        print(ball_array[:, 0])
-        print(ball_array[:, 1])
-        print('predict_result')
-        print(x_p)
-        print(slope)
+       # print(ball_array[:, 0])
+       # print(ball_array[:, 1])
+       # print('predict_result')
+       # print("x_p :",x_p) 
+       # print(slope)
         # print((5000+int(-y_p))*10000+step*1000+0)
 
 # ---------------------------------------------------Data Send----------------------------------------------------------
-        data = str(x_p*4) #1000 부분을 조절해서, y를 맞춰야함
-        data=0 #fix well for good clear x_p
+        data = str(x_p*5.5) #1000 부분을 조절해서, y를 맞춰야함
+        # data=str(0) #fix well for good clear x_p
 
         udp_socket.sendto(data.encode(), (ip_address, 9999))
 
-    if temp_0 == 1 and ball_3D[1] > 0:
-        temp_0 = 0
+    # elif temp_0 == 1 and ball_3D[1] > 11.5:
+    #     temp_0 = 0
 
 
 def reset_params():
@@ -263,6 +265,7 @@ def reset_params():
     global slope_temp, slope
     global temp_0
     global ball_array
+    global x_p
 
     ball_array = np.zeros((3, 2)) # [[0,0],[0,0],[0,0]]
     temp_0 = 1
@@ -282,7 +285,7 @@ if __name__ == '__main__':
 
 # -----------------------------------------------초기값 UDP Send---------------------------------------------------------
 
-    ip_address="172.17.26.156"
+    ip_address="172.17.27.22"
     data_zero = str(50000000)
     udp_socket.sendto(data_zero.encode(), (ip_address, 9999))
     data_impact = str(0)
@@ -410,7 +413,7 @@ if __name__ == '__main__':
     cap0.set(cv2.CAP_PROP_POS_MSEC, 11) #set fps approx 90
     cap0.set(cv2.CAP_PROP_AUTOFOCUS, 0) #turn-off autofocus function
     cap0.set(cv2.CAP_PROP_FPS, 90)
-    # cap0.set(cv2.CAP_PROP_EXPOSURE, -6)
+    # cap0.set(cv2.CAP_PROP_EXPOSURE, 7)
     # cap0.set(cv2.CAP_PROP_BRIGHTNESS, 500)
     print("the cap0 fps: ", cap0.get(cv2.CAP_PROP_FPS))
 
@@ -427,7 +430,7 @@ if __name__ == '__main__':
     cap1.set(cv2.CAP_PROP_POS_MSEC, 11)
     cap1.set(cv2.CAP_PROP_AUTOFOCUS, 0)
     cap1.set(cv2.CAP_PROP_FPS, 90)
-    # cap1.set(cv2.CAP_PROP_EXPOSURE, -6)
+    # cap1.set(cv2.CAP_PROP_EXPOSURE, 7)
     # cap1.set(cv2.CAP_PROP_BRIGHTNESS, 500)
     print("the cap1 fps: ", cap1.get(cv2.CAP_PROP_FPS))
 
@@ -467,21 +470,20 @@ if __name__ == '__main__':
             print('break!')
             break
 
-        if ball_3D[1] >= 12: #maybe std at which the robot should impact
+        if ball_3D[1] >= 11: #maybe std at which the robot should impact
             impact = 1
         else:
             impact = 0
 
         if print_std%print_now==0:
-            print('impact')
-            print(impact)
+            print("impact: ", impact)
         data_impact = str(impact)
         udp_socket.sendto(data_impact.encode(), (ip_address, 3333))
 
         ball_3D_temp = ball_3D
 
         if print_std%print_now==0:
-            print(temp_0)
+            print("temp_0: (ignored)", temp_0)
 
         tm.stop()
         if print_std%print_now==0:

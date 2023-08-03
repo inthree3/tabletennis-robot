@@ -41,18 +41,19 @@ def vision_set(print_std):
 
     ret_1, frame_1 = cap1.read()
 
-    cv2.imshow('frame_1', frame_1)
+    cv2.imshow('src_1', frame_1)
+    src_1 = cv2.remap(frame_1, mapx1, mapy1, cv2.INTER_LINEAR)
 
     #show current 3D points through mouse click
     # cv2.imshow('current_point0', src_0) 
-    # cv2.imshow('current_point1', frame_1)
+    # cv2.imshow('current_point1', src_1)
 
     # cv2.setMouseCallback('current_point0', print_3D, 0)
     # cv2.setMouseCallback('current_point1', print_3D, 1)
 
-    src_hsv_1 = cv2.cvtColor(frame_1, cv2.COLOR_BGR2HSV)
+    src_hsv_1 = cv2.cvtColor(src_1, cv2.COLOR_BGR2HSV)
 
-    cv2.setMouseCallback('frame_1', click_color_1, src_hsv_1)
+    cv2.setMouseCallback('src_1', click_color_1, src_hsv_1)
 
     #check for 2D matrix
     def checkPoints(event, x, y, flags, param) :
@@ -77,7 +78,7 @@ def vision_set(print_std):
 
     # 마스크 이미지로 원본 이미지에서 범위값에 해당되는 영상 부분을 획득
 
-    img_result_1 = cv2.bitwise_and(frame_1, frame_1, mask=dst_1)
+    img_result_1 = cv2.bitwise_and(src_1, src_1, mask=dst_1)
 
     numOfLabels_1, img_label_1, stats_1, centroids_1 = cv2.connectedComponentsWithStats(dst_1)
 
@@ -96,8 +97,8 @@ def vision_set(print_std):
 
         if 100 < area < 5000:
             # 일정 범위 이상 & 이하인 부분에 대해서만 centroids 값 반환
-            cv2.circle(frame_1, (centerX, centerY), 10, (0, 0, 255), 10)
-            cv2.rectangle(frame_1, (x, y), (x + width, y + height), (0, 0, 255))
+            cv2.circle(src_1, (centerX, centerY), 10, (0, 0, 255), 10)
+            cv2.rectangle(src_1, (x, y), (x + width, y + height), (0, 0, 255))
             ball_cam1 = np.array([centroid[0], centroid[1]], dtype=float)
 
 
@@ -106,7 +107,7 @@ def vision_set(print_std):
     # cv2.imshow('dst_0', dst_0)
     # cv2.imshow('img_result_0', img_result_0)
 
-    cv2.imshow('frame_1', frame_1)
+    cv2.imshow('src_1', src_1)
     # cv2.imshow('dst_1', dst_1)
     # cv2.imshow('img_result_1', img_result_1)
 
@@ -126,6 +127,8 @@ def predict():
     global i, j
     global impact
 
+    impact = 0
+
     #the condition at which the ball is going over the net (temp_0==1)
     # print("temp_0 : ", temp_0)
 
@@ -133,22 +136,25 @@ def predict():
     # if temp_0 == 1 and centerY > 200:
     # ball_array [0,0],[0,0] --> ball_array[0]: temp_point, ball_array[1]: curr_point
     if len(ball_array)==2:
-        ball_array.pop(0)
+        ball_array.pop()
 
     ball_array.append([centerX, centerY])
-    ball_array[i][1] = centerY
 
-    if ball_array[1][1] - 653!=0:
-        slope = (ball_array[1][0] - 705) / (ball_array[1][1] - 653)
+    if ball_array[1][1] - 647 !=0:
+        print("center_x", centerX)
+        print("center_y", centerY)
+        print("ball_array_x", ball_array[1][0])
+        print("ball_array_y", ball_array[1][1])
+        slope = (ball_array[1][0] - 646) / (ball_array[1][1] - 647)
     else:
         slope=0
 
     # x_p = slope * 24 + 0
     j=0
-    x_p = slope * 60
+    x_p = slope * (-844) * 0.2
     if j%20==0:
         print("slope: ", slope)
-        print("current x" , ball_array[1][0])
+        # print("current x" , ball_array[1][0])
         print("result x_p: ", x_p)
 # ---------------------------------------------------y_p calc-----------------------------------------------------------
 
