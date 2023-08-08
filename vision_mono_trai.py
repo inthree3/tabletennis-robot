@@ -165,7 +165,7 @@ def predict():
 
     # x_p = slope * 24 + 0
     j=0
-    x_p = (slope * (-208 - ball_array[1][1])  + ball_array[1][0] - 661) * 0.15
+    x_p = (slope * (-230 - ball_array[1][1])  + ball_array[1][0] - 580) * 0.35
 
     
 
@@ -186,7 +186,7 @@ def predict():
         udp_socket.sendto(str(1).encode(), (ip_address, 3333))
         time.sleep(1)   # 강민석이 바꿈
         udp_socket.sendto(str(0).encode(), (ip_address, 3333))
-        time.sleep(3)
+        time.sleep(0.5)
 
 # ---------------------------------------------------y_p calc-----------------------------------------------------------
 
