@@ -3,6 +3,7 @@ import numpy as np
 import os
 import socket
 import time
+import math
 
 
 def nothing(x):
@@ -128,10 +129,11 @@ def predict():
     global ball_array
     global centerX, centerY
     global temp_0
-    global slope, slope_temp #only 'slope' is used
+    global slope, slope_temp, slope_send #only 'slope' is used
     global x_p
     global i, j
     global impact
+    global pcnt
 
 
     #the condition at which the ball is going over the net (temp_0==1)
@@ -140,23 +142,30 @@ def predict():
     
     # if temp_0 == 1 and centerY > 200:
     # ball_array [0,0],[0,0] --> ball_array[0]: temp_point, ball_array[1]: curr_point
-    if len(ball_array)==2:
-        ball_array.pop()
 
-    ball_array.append([centerX, centerY])
+
+
+    if ball_array[0][0]!=centerX and ball_array[0][1]!=centerY:
+        ball_array.append([centerX, centerY])
+        ball_array.pop(0)
 
     if ball_array[1][1] - 647 !=0:
         # print("center_x", centerX)
         # print("center_y", centerY)
         # print("ball_array_x", ball_array[1][0])
         # print("ball_array_y", ball_array[1][1])
-        slope = (ball_array[1][0] - 646) / (ball_array[1][1] - 647)
+        if ball_array[1][1] - ball_array[0][1]!=0:
+            slope = (ball_array[1][0] - ball_array[0][0]) / (ball_array[1][1] - ball_array[0][1])
+        else:
+            print("denominator is zero")
+        slope_send = math.atan(-slope)
+        print("deg_send : ", math.degrees(slope_send))
     else:
         slope=0
 
     # x_p = slope * 24 + 0
     j=0
-    x_p = slope * (-844) * 0.35 + 18
+    x_p = (slope * (-208 - ball_array[1][1])  + ball_array[1][0] - 661) * 0.15
 
     
 
@@ -166,8 +175,10 @@ def predict():
         print("slope: ", slope)
         print("center_x", centerX)
         print("center_y", centerY)
-        print("ball_array_x", ball_array[1][0])
-        print("ball_array_y", ball_array[1][1])
+        print("ball_array_x1", ball_array[0][0])
+        print("ball_array_y1", ball_array[0][1])
+        print("ball_array_x2", ball_array[1][0])
+        print("ball_array_y2", ball_array[1][1])
         print("current x" , ball_array[1][0])
         print("result x_p: ", x_p)
         udp_socket.sendto(str(x_p).encode(), (ip_address, 9999))
@@ -271,7 +282,7 @@ if __name__ == '__main__':
     global hmin_1, hmax_1, smin_1, smax_1, vmin_1, vmax_1
     global impact
     global centerX, centerY
-    global cnt
+    global cnt, pcnt
 
     #set initial color range
     lower_color = [0, 87, 89]
@@ -290,6 +301,8 @@ if __name__ == '__main__':
     centerX=760
     ball_array = [[0,0],[0,0]]
     impact=0
+    pcnt = 0
+    cnt = 2
 
     i_main = 0
     h, w = np.array([720, 1280])
@@ -393,6 +406,7 @@ if __name__ == '__main__':
     print_std=0
     print_now=50
     cnt = 2
+    pcnt = 0
 
     while True:
 

@@ -2,7 +2,6 @@ import cv2
 import numpy as np
 import os
 import socket
-import time
 
 
 def nothing(x):
@@ -10,6 +9,25 @@ def nothing(x):
 
 
 #function: set the ball color range through clicking
+def click_color_0(event, x, y, flags, params):
+    #global vars declaration
+    global hmin_0, hmax_0, smin_0, smax_0, vmin_0, vmax_0
+    tolerance=40
+
+    if event == cv2.EVENT_LBUTTONDBLCLK:
+        selected_color=params[y, x]
+        hsv_color=cv2.cvtColor(np.uint8([[selected_color]]), cv2.COLOR_BGR2HSV)
+        hue=int(hsv_color[0][0][0]) #for cv2.inRange error being resolved
+        shade=int(hsv_color[0][0][1])
+        value=int(hsv_color[0][0][2])
+        lower_color=[max(0,hue-tolerance/2), max(0,shade-tolerance), max(0,value-3*tolerance)]
+        upper_color=[min(255, hue+tolerance/2), min(255, shade+3*tolerance), min(255,value+3*tolerance)]
+
+        #set the color range as global
+        [hmin_0, smin_0, vmin_0]=lower_color
+        [hmax_0, smax_0, vmax_0]=upper_color
+        print("Selected HSV Range is ", lower_color, upper_color)
+
 def click_color_1(event, x, y, flags, params):
     #global vars declaration
     global hmin_1, hmax_1, smin_1, smax_1, vmin_1, vmax_1
@@ -28,23 +46,36 @@ def click_color_1(event, x, y, flags, params):
         [hmax_1, smax_1, vmax_1]=upper_color
         print("Selected HSV Range is ", lower_color, upper_color)
 
+#function for showing the current 3D point
+def print_3D(event, x, y, flags, params):
+        global ball_3D
+        if event == cv2.EVENT_LBUTTONDBLCLK:
+            print(f"current point of cam{params}: ", ball_3D)
 
 
 def vision_set(print_std):
     # while True:
 
-    global mapx1, mapy1, mask1, cap1
-    global centerX, centerY
-   
+    global mapx0, mapx1, mapy0, mapy1, mask0, mask1, cap0, cap1
+    global ball_3D_temp, ball_3D
     # global ball_cam0, ball_cam1
 
+    ball_cam0 = np.array([0, 0])
     ball_cam1 = np.array([0, 0])
 
+    ret_0, frame_0 = cap0.read()
     ret_1, frame_1 = cap1.read()
 
+    cv2.imshow('src_0', frame_0)
+    src_0 = cv2.remap(frame_0, mapx0, mapy0, cv2.INTER_LINEAR)
+    src_0 = cv2.copyTo(src_0, mask0)
+
     cv2.imshow('src_1', frame_1)
-    src_1 = cv2.remap(frame_1, mapx1, mapy1, cv2.INTER_LINEAR)
+    src_1 = cv2.remap(frame_1, mapx0, mapy0, cv2.INTER_LINEAR)
     src_1 = cv2.copyTo(src_1, mask1)
+
+    cv2.imshow('src_0', src_0)
+    cv2.imshow('src_1', src_1)
 
     #show current 3D points through mouse click
     # cv2.imshow('current_point0', src_0) 
@@ -53,8 +84,11 @@ def vision_set(print_std):
     # cv2.setMouseCallback('current_point0', print_3D, 0)
     # cv2.setMouseCallback('current_point1', print_3D, 1)
 
+
+    src_hsv_0 = cv2.cvtColor(src_0, cv2.COLOR_BGR2HSV)
     src_hsv_1 = cv2.cvtColor(src_1, cv2.COLOR_BGR2HSV)
 
+    cv2.setMouseCallback('src_0', click_color_0, src_hsv_0)
     cv2.setMouseCallback('src_1', click_color_1, src_hsv_1)
 
     #check for 2D matrix
@@ -66,7 +100,8 @@ def vision_set(print_std):
 
 
     # Detecting Color Setting
-    # dst_1 = cv2.inRange(src_hsv_1, (hmin_1, smin_1, vmin_1), (hmax_1, smax_1, vmax_1))
+    dst_0 = cv2.inRange(src_hsv_0, (hmin_0, smin_0, vmin_0), (hmax_0, smax_0, vmax_0))
+    dst_1 = cv2.inRange(src_hsv_1, (hmin_1, smin_1, vmin_1), (hmax_1, smax_1, vmax_1))
 
     # cv2.imshow('dst_0', dst_0)
     # cv2.imshow('dst_1', dst_1)
@@ -75,16 +110,43 @@ def vision_set(print_std):
     kernel = np.ones((3, 3), np.uint8)
     # dst_0 = cv2.morphologyEx(dst_0, cv2.MORPH_OPEN, kernel)
     # dst_0 = cv2.morphologyEx(dst_0, cv2.MORPH_CLOSE, kernel)
+    # dst_1 = cv2.morphologyEx(dst_1, cv2.MORPH_OPEN, kernel)
+    # dst_1 = cv2.morphologyEx(dst_1, cv2.MORPH_CLOSE, kernel)
+    mask0 = cv2.morphologyEx(mask0, cv2.MORPH_OPEN, kernel)
+    mask0 = cv2.morphologyEx(mask0, cv2.MORPH_CLOSE, kernel)
     mask1 = cv2.morphologyEx(mask1, cv2.MORPH_OPEN, kernel)
     mask1 = cv2.morphologyEx(mask1, cv2.MORPH_CLOSE, kernel)
 
     # 마스크 이미지로 원본 이미지에서 범위값에 해당되는 영상 부분을 획득
+
+    dst_0 = cv2.inRange(src_hsv_0, (hmin_0, smin_0, vmin_0), (hmax_0, smax_0, vmax_0))
     dst_1 = cv2.inRange(src_hsv_1, (hmin_1, smin_1, vmin_1), (hmax_1, smax_1, vmax_1))
+
+    img_result_0 = cv2.bitwise_and(src_0, src_0, mask=dst_0)
     img_result_1 = cv2.bitwise_and(src_1, src_1, mask=dst_1)
 
+    numOfLabels_0, img_label_0, stats_0, centroids_0 = cv2.connectedComponentsWithStats(dst_0)
     numOfLabels_1, img_label_1, stats_1, centroids_1 = cv2.connectedComponentsWithStats(dst_1)
 
     # centroids==무게중심 좌표(x,y)
+
+    for idx, centroid in enumerate(centroids_0):
+        if stats_0[idx][0] == 0 and stats_0[idx][1] == 0:
+            continue
+
+        if np.any(np.isnan(centroid)):
+            continue
+
+        x, y, width, height, area = stats_0[idx]
+        centerX, centerY = int(centroid[0]), int(centroid[1])
+        # print(centerX, centerY)
+
+        if 100 < area < 5000:
+            # 일정 범위 이상 & 이하인 부분에 대해서만 centroids 값 반환
+
+            cv2.circle(src_0, (centerX, centerY), 10, (0, 0, 255), 10)
+            cv2.rectangle(src_0, (x, y), (x + width, y + height), (0, 0, 255))
+            ball_cam0 = np.array([centroid[0], centroid[1]], dtype=float)
 
     for idx, centroid in enumerate(centroids_1):
 
@@ -95,19 +157,25 @@ def vision_set(print_std):
             continue
 
         x, y, width, height, area = stats_1[idx]
-        
+        centerX, centerY = int(centroid[0]), int(centroid[1])
 
         if 100 < area < 5000:
             # 일정 범위 이상 & 이하인 부분에 대해서만 centroids 값 반환
-            cv2.circle(src_1, (int(centerX), int(centerY)), 10, (0, 0, 255), 10)
+            cv2.circle(src_1, (centerX, centerY), 10, (0, 0, 255), 10)
             cv2.rectangle(src_1, (x, y), (x + width, y + height), (0, 0, 255))
             ball_cam1 = np.array([centroid[0], centroid[1]], dtype=float)
 
-        centerX = ball_cam1[0]
-        centerY = ball_cam1[1]
+    if ball_cam0[0] != 0 and ball_cam1[0] != 0:
+        # ball_3D=[x, y, z]
+        ball_tri = np.array(cv2.triangulatePoints(P0, P1, ball_cam0, ball_cam1))
+        ball_3D = ball_tri[:3] / ball_tri[-1]
+
+    else:
+        ball_3D = ball_3D_temp
 
     # Display
 
+    cv2.imshow('src_0', src_0)
     # cv2.imshow('dst_0', dst_0)
     # cv2.imshow('img_result_0', img_result_0)
 
@@ -118,180 +186,144 @@ def vision_set(print_std):
     if print_std%5==0:
         print('')
         print('-----------------------------------------')
+        print(ball_cam0)
         print(ball_cam1)
-        print("centerX :", centerX)
-        print("centerY :", centerY)
+        print('ball_3D_temp')
+        print(ball_3D_temp)
+        print('ball_3D')
+        print(ball_3D)
 
 
 
 def predict():
-    global ball_array
-    global centerX, centerY
-    global temp_0
-    global slope, slope_temp #only 'slope' is used
-    global x_p
-    global i, j
-    global impact
 
+    global ball_array
+    global temp_0
+    global ball_3D, ball_3D_temp
+    global slope, slope_send, slope_temp #only 'slope' is used
+    global x_p
 
     #the condition at which the ball is going over the net (temp_0==1)
-    # print("temp_0 : ", temp_0)
+    print("temp_0 : ", temp_0)
 
-    
-    # if temp_0 == 1 and centerY > 200:
-    # ball_array [0,0],[0,0] --> ball_array[0]: temp_point, ball_array[1]: curr_point
-    if len(ball_array)==2:
-        ball_array.pop()
+    if temp_0 == 1 and ball_3D[1] > 0:
+        ball_array[:, 0:1] = ball_3D
 
-    ball_array.append([centerX, centerY])
+        slope_send = (ball_array[1, 1] - ball_array[1, 0]) / (ball_array[0, 1] - ball_array[0, 0])
+        slope = (ball_array[0, 1] -ball_array[0, 0]) / (ball_array[1, 1] - ball_array[1, 0]) 
 
-    if ball_array[1][1] - 647 !=0:
-        # print("center_x", centerX)
-        # print("center_y", centerY)
-        # print("ball_array_x", ball_array[1][0])
-        # print("ball_array_y", ball_array[1][1])
-        slope = (ball_array[1][0] - 646) / (ball_array[1][1] - 647)
-    else:
-        slope=0
-
-    # x_p = slope * 24 + 0
-    j=0
-    x_p = slope * (-844) * 0.35 + 18
-
-    
-
-
-    if impact==1 and cnt > 0:
-        print("impact detection succeeded")
-        print("slope: ", slope)
-        print("center_x", centerX)
-        print("center_y", centerY)
-        print("ball_array_x", ball_array[1][0])
-        print("ball_array_y", ball_array[1][1])
-        print("current x" , ball_array[1][0])
-        print("result x_p: ", x_p)
-        udp_socket.sendto(str(x_p).encode(), (ip_address, 9999))
-        time.sleep(0.03)
-        udp_socket.sendto(str(1).encode(), (ip_address, 3333))
-        time.sleep(1)   # 강민석이 바꿈
-        udp_socket.sendto(str(0).encode(), (ip_address, 3333))
-        time.sleep(3)
-
+        # x_p = slope * 24 + 0
+        x_p = slope*(ball_array[1, 1] - ball_array[1, 0]) + ball_array[0, 0]
 # ---------------------------------------------------y_p calc-----------------------------------------------------------
 
-    if x_p > 55:
-        x_p = 55
-    elif x_p < -55:
-        x_p = -55
+        if x_p > 10:
+            x_p = 10
+        elif x_p < -10:
+            x_p = -10
 
 # ----------------------------------------------------Step Calc---------------------------------------------------------
 
-    # if 0 < abs(slope) < 0.04:
-    #     step = 1
+        # if 0 < abs(slope) < 0.04:
+        #     step = 1
 
-    # elif 0.04 < abs(slope) < 0.08:
-    #     step = 2
+        # elif 0.04 < abs(slope) < 0.08:
+        #     step = 2
 
-    # elif 0.08 < abs(slope) < 0.12:
-    #     step = 3
+        # elif 0.08 < abs(slope) < 0.12:
+        #     step = 3
 
-    # elif 0.12 < abs(slope) < 0.16:
-    #     step = 4
+        # elif 0.12 < abs(slope) < 0.16:
+        #     step = 4
 
-    # else:
-    #     step = 5
+        # else:
+        #     step = 5
 
-    # if -470 <= y_p < -200:
-    #     y_p = -380
+        # if -470 <= y_p < -200:
+        #     y_p = -380
 
-    # elif -200 <= y_p < 200:
-    #     y_p = -25
+        # elif -200 <= y_p < 200:
+        #     y_p = -25
 
-    # elif 200 <= y_p <= 470:
-    #     y_p = 380
+        # elif 200 <= y_p <= 470:
+        #     y_p = 380
 
 # -----------------------------------------------------print------------------------------------------------------------
 
- 
-    # print('predict_result')
-    # print("x_p :",x_p) 
-    # print(slope)
-    # print((5000+int(-y_p))*10000+step*1000+0)
+       # print(ball_array[:, 0])
+       # print(ball_array[:, 1])
+       # print('predict_result')
+       # print("x_p :",x_p) 
+       # print(slope)
+        # print((5000+int(-y_p))*10000+step*1000+0)
 
 # ---------------------------------------------------Data Send----------------------------------------------------------
-    #data = str(x_p) #1000 부분을 조절해서, y를 맞춰야함
-    # data=str(0) #fix well for good clear x_p
+        data = str(x_p*5.5) #1000 부분을 조절해서, y를 맞춰야함
+        # data=str(0) #fix well for good clear x_p
 
-    #if impact == 1 and cnt > 0:
-     #   udp_socket.sendto(data.encode(), (ip_address, 9999))
+        udp_socket.sendto(data.encode(), (ip_address, 9999))
 
-     #  udp_socket.sendto(str(impact).encode(), (ip_address, 3333))  # 강민석이 단거임
-#
- #       udp_socket.sendto(str(0).encode(), (ip_address, 3333))
-
-
-
-# elif temp_0 == 1 and ball_3D[1] > 11.5:
-#     temp_0 = 0
+    # elif temp_0 == 1 and ball_3D[1] > 11.5:
+    #     temp_0 = 0
 
 
 def reset_params():
-    global curr_p, prev_p
+
+    global ball_3D, i, ball_3D_temp
     global slope_temp, slope
     global temp_0
     global ball_array
     global x_p
 
-    impact = 0
-    ball_array = []
+    ball_array = np.zeros((3, 2)) # [[0,0],[0,0],[0,0]]
     temp_0 = 1
+    ball_3D = np.zeros((3, 1))
+    ball_3D_temp = np.zeros((3, 1))
     slope = 0
     slope_temp = 0
-    curr_p=[0,0]
-    prev_p=[0,0]
-    data_reset = str(0)
+    data_reset = str(50000000)
     udp_socket.sendto(data_reset.encode(), (ip_address, 9999))
     print('reset!')
 
 
 if __name__ == '__main__':
+
     udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     os.chdir('C:/Users/User/Desktop/Dev/tabletennis_robot')
 
 # -----------------------------------------------초기값 UDP Send---------------------------------------------------------
 
     ip_address="172.17.27.22"
-    data_zero = str(0)
+    data_zero = str(50000000)
     udp_socket.sendto(data_zero.encode(), (ip_address, 9999))
     data_impact = str(0)
     udp_socket.sendto(data_impact.encode(), (ip_address, 3333))
 
     # Set Global Variables
 
+    global hmin_0, hmax_0, smin_0, smax_0, vmin_0, vmax_0
     global hmin_1, hmax_1, smin_1, smax_1, vmin_1, vmax_1
-    global impact
-    global centerX, centerY
-    global cnt
 
     #set initial color range
-    lower_color = [0, 87, 89]
-    upper_color = [63, 255, 255]
+    lower_color = [18, 71, 100]
+    upper_color = [25, 88, 100]
 
+    [hmin_0, smin_0, vmin_0]=lower_color
+    [hmax_0, smax_0, vmax_0]=upper_color
 
     [hmin_1, smin_1, vmin_1]=lower_color
     [hmax_1, smax_1, vmax_1]=upper_color
 
 
     temp_0 = 1
+    i = 0
     y_p = 0
     slope = 0
     slope_temp = 0
-    centerY=480
-    centerX=760
-    ball_array = [[0,0],[0,0]]
-    impact=0
+    ball_array = np.zeros((3, 2))
 
     i_main = 0
+    ball_3D_temp = np.zeros((3, 1))
+    ball_3D = np.zeros((3, 1))
     h, w = np.array([720, 1280])
 
     # Set Camera Matrix
@@ -299,40 +331,61 @@ if __name__ == '__main__':
     #R0 = np.linalg.inv(np.array([[-0.6403, -0.6730, -1.4113], 
      #                            [-0.5477, -0.5929, -1.4882], 
       #                           [-0.4374, -0.4086 , -1.4703]]))
+    r0 = np.array([-0.08196, 0.41632342, 3.10042661])
     r1 = np.array([-0.06858176, 1.389907, 2.78486924])
 
+    R0, _ = cv2.Rodrigues(r0)
     R1, _ = cv2.Rodrigues(r1)
     
+    T0 = np.array([1.48079843, 6.07775434, 24.29342169])
     T1 = np.array([6.27299391, 4.01877434, 24.29342169])
 
     # Translation Matrix between each cam & World Coord
     # Focal length of each cam
 
+    cam0_f = np.array([535.90786742, 530.60972232])
     cam1_f = np.array([419.4296, 384.6875])
 
     # Principle Point of each cam
 
+    cam0_c = np.array([655.77404621, 354.47028656])
     cam1_c = np.array([647.8114, 358.0928])
 
     # Intrinsics Matrix
 
+    cam0_int = np.array([[783.89487299, 0, 673.87675856], [0, 787.96916992, 388.49312521], [0, 0, 1]])
     cam1_int = np.array([[814.49848129, 0., 568.49302368], [0., 805.90235641, 369.59529032], [0., 0., 1.]])
 
+    mtx0 = cam0_int
     mtx1 = cam1_int
-    
-    #hstack: 가로로 두 array 붙이는 연산
+
+    dist0 = np.array([0.2724565, -0.65692629, 0.01741777, 0.00634816, 0.37098618]) #hstack: 가로로 두 array 붙이는 연산
     dist1 = np.array([0.3166118, -0.49218699, -0.0046719, -0.03840587, 0.25442361])
 
     print('intrinsics Matrix')
+    print('')
+    print(mtx0)
+    print(dist0)
     print("")
     print(mtx1)
     print(dist1)
 
     # Calibration for new camera matrix
 
+    newcameraMtx0, roi0 = cv2.getOptimalNewCameraMatrix(cam0_int, dist0, (w, h), 1, (w, h))
+    print(newcameraMtx0)
+    print("")
     newcameraMtx1, roi1 = cv2.getOptimalNewCameraMatrix(cam1_int, dist1, (w, h), 1, (w, h))
     print(newcameraMtx1)
+
+    print(roi0)
     print(roi1)
+
+    # T0 = np.array([0,0,0]) # Translation vector
+    RT0 = np.zeros((3, 4))  # combined Rotation/Translation matrix
+    RT0[:3, :3] = R0
+    RT0[:3, 3] = T0
+    P0 = np.dot(newcameraMtx0, RT0)  # Projection matrix
 
     # # define pose 1
 
@@ -342,27 +395,37 @@ if __name__ == '__main__':
     RT1[:3, 3] = T1
     P1 = np.dot(newcameraMtx1, RT1)
 
+    print(P0)
     print(P1)
 
+    mapx0, mapy0 = cv2.initUndistortRectifyMap(mtx0, dist0, None, newcameraMtx0, (w, h), 5)
     mapx1, mapy1 = cv2.initUndistortRectifyMap(mtx1, dist1, None, newcameraMtx1, (w, h), 5)
-    
 
     # CAP_DSHOW 가 그냥 Index Calling에 비해 속도 훨씬 빠름
 
     # p1 = Process(target=vision_set())
     # p2 = Process(target=predict())
 
-    cap1 = cv2.VideoCapture(cv2.CAP_DSHOW + 0)
+    cap0 = cv2.VideoCapture(cv2.CAP_DSHOW + 0)
+    cap1 = cv2.VideoCapture(cv2.CAP_DSHOW + 1)
 
+    cap0.isOpened()
     cap1.isOpened()
 
     # Camera0_Setting
 
-    cap1.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-    cap1.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+    cap0.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+    cap0.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+    cap0.set(cv2.CAP_PROP_FRAME_COUNT, 60)
+    cap0.set(cv2.CAP_PROP_POS_MSEC, 11) #set fps approx 90
+    cap0.set(cv2.CAP_PROP_AUTOFOCUS, 0) #turn-off autofocus function
+    cap0.set(cv2.CAP_PROP_FPS, 90)
+    # cap0.set(cv2.CAP_PROP_EXPOSURE, 7)
+    # cap0.set(cv2.CAP_PROP_BRIGHTNESS, 500)
+    print("the cap0 fps: ", cap0.get(cv2.CAP_PROP_FPS))
 
-    w_0 = int(cap1.get(cv2.CAP_PROP_FRAME_WIDTH))
-    h_0 = int(cap1.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    w_0 = int(cap0.get(cv2.CAP_PROP_FRAME_WIDTH))
+    h_0 = int(cap0.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
     print("the width and height of the CAM0: ", w_0, h_0)
 
@@ -374,11 +437,17 @@ if __name__ == '__main__':
     cap1.set(cv2.CAP_PROP_POS_MSEC, 11)
     cap1.set(cv2.CAP_PROP_AUTOFOCUS, 0)
     cap1.set(cv2.CAP_PROP_FPS, 90)
-    cap1.set(cv2.CAP_PROP_EXPOSURE, -7)
+    # cap1.set(cv2.CAP_PROP_EXPOSURE, 7)
     # cap1.set(cv2.CAP_PROP_BRIGHTNESS, 500)
     print("the cap1 fps: ", cap1.get(cv2.CAP_PROP_FPS))
 
-    mask1 = cv2.imread('cam0_mask_cali_v2.jpg', cv2.IMREAD_GRAYSCALE)
+    w_1 = int(cap0.get(cv2.CAP_PROP_FRAME_WIDTH))
+    h_1 = int(cap0.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+    print("the width and height of the CAM1: ", w_1, h_1)
+
+    mask0 = cv2.imread('cam0_mask_cali_v2.jpg', cv2.IMREAD_GRAYSCALE)
+    mask1 = cv2.imread('cam1_mask_cali_v2.jpg', cv2.IMREAD_GRAYSCALE)
 
     # cv2.namedWindow('src')
 
@@ -391,8 +460,7 @@ if __name__ == '__main__':
     
     # the standard for printing current state
     print_std=0
-    print_now=50
-    cnt = 2
+    print_now=5
 
     while True:
 
@@ -400,35 +468,29 @@ if __name__ == '__main__':
         tm.start()
         vision_set(print_std)
 
+        if (ball_3D[1] - ball_3D_temp[1]) > 0:
+            predict()
+
         if cv2.waitKey(1) & 0xFF == ord('r'):
             reset_params()
         elif cv2.waitKey(1) & 0xFF == 27:
             print('break!')
             break
 
-
-        if centerY < 150 and [centerX, centerY]!=[0,0]: #maybe std at which the robot should impact
+        if ball_3D[1] >= 11: #maybe std at which the robot should impact
             impact = 1
-            cnt = cnt - 1
-        else :
+        else:
             impact = 0
-            cnt = 2
-
-        predict()
-
-        if print_std%print_now==0:
-            print("centerX: ", centerX)
-            print("centerY: ", centerY)
 
         if print_std%print_now==0:
             print("impact: ", impact)
+        data_impact = str(impact)
+        udp_socket.sendto(data_impact.encode(), (ip_address, 3333))
 
-        print("cnt : ", cnt)
+        ball_3D_temp = ball_3D
 
-
-
-        # if print_std%print_now==0:
-        #     print("temp_0: (ignored)", temp_0)
+        if print_std%print_now==0:
+            print("temp_0: (ignored)", temp_0)
 
         tm.stop()
         if print_std%print_now==0:
@@ -438,4 +500,5 @@ if __name__ == '__main__':
         print_std+=1
 
     cv2.destroyAllWindows()
+    cap0.release()
     cap1.release()
