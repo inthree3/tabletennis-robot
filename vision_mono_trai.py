@@ -144,60 +144,61 @@ def predict():
     # ball_array [0,0],[0,0] --> ball_array[0]: temp_point, ball_array[1]: curr_point
 
 
+    while ball_array[1][1] - ball_array[0][1] > 0 :
 
-    if ball_array[0][0]!=centerX and ball_array[0][1]!=centerY:
-        ball_array.append([centerX, centerY])
-        ball_array.pop(0)
+        if ball_array[0][0]!=centerX and ball_array[0][1]!=centerY:
+            ball_array.append([centerX, centerY])
+            ball_array.pop(0)
 
-    if ball_array[1][1] - 647 !=0:
-        # print("center_x", centerX)
-        # print("center_y", centerY)
-        # print("ball_array_x", ball_array[1][0])
-        # print("ball_array_y", ball_array[1][1])
-        if ball_array[1][1] - ball_array[0][1]!=0:
-            slope = (ball_array[1][0] - ball_array[0][0]) / (ball_array[1][1] - ball_array[0][1])
+        if ball_array[1][1] - 647 !=0:
+            # print("center_x", centerX)
+            # print("center_y", centerY)
+            # print("ball_array_x", ball_array[1][0])
+            # print("ball_array_y", ball_array[1][1])
+            if ball_array[1][1] - ball_array[0][1]!=0:
+                slope = (ball_array[1][0] - ball_array[0][0]) / (ball_array[1][1] - ball_array[0][1])
+            else:
+                print("denominator is zero")
+            deg_send = math.degrees(math.atan(-slope))
+            deg_0 =f"{0},{0}"
+            data= f"{1},{deg_send}"
+            print("deg_send : ", deg_send)
         else:
-            print("denominator is zero")
-        deg_send = math.degrees(math.atan(-slope))
-        deg_0 =f"{0},{0}"
-        print("deg_send : ", deg_send)
-    else:
-        slope=0
+            slope=0
 
-    # x_p = slope * 24 + 0
-    j=0
-    x_p = (slope * (-230 - ball_array[1][1])  + ball_array[1][0] - 580) * 0.35
+        # x_p = slope * 24 + 0
+        j=0
+        x_p = (slope * (-230 - ball_array[1][1])  + ball_array[1][0] - 580) * 0.35
 
-    
+        
 
 
-    if impact==1 and cnt > 0:
-        print("impact detection succeeded")
-        print("slope: ", slope)
-        print("center_x", centerX)
-        print("center_y", centerY)
-        print("ball_array_x1", ball_array[0][0])
-        print("ball_array_y1", ball_array[0][1])
-        print("ball_array_x2", ball_array[1][0])
-        print("ball_array_y2", ball_array[1][1])
-        print("current x" , ball_array[1][0])
-        print("result x_p: ", x_p)
-        udp_socket.sendto(str(x_p).encode(), (ip_address, 9999))
-        time.sleep(0.03)
-        udp_socket.sendto(str(1).encode(), (ip_address, 3333))
-        data= f"{deg_send},{1}"
-        udp_socket.sendto(data.encode(), (ip_address, 6666))
-        time.sleep(1)   # 강민석이 바꿈
-        udp_socket.sendto(str(0).encode(), (ip_address, 3333))
-        udp_socket.sendto(deg_0.encode(), (ip_address, 6666))
-        time.sleep(0.5)
+        if impact==1 and cnt > 0:
+            print("impact detection succeeded")
+            print("slope: ", slope)
+            print("center_x", centerX)
+            print("center_y", centerY)
+            print("ball_array_x1", ball_array[0][0])
+            print("ball_array_y1", ball_array[0][1])
+            print("ball_array_x2", ball_array[1][0])
+            print("ball_array_y2", ball_array[1][1])
+            print("current x" , ball_array[1][0])
+            print("result x_p: ", x_p)
+            udp_socket.sendto(str(x_p).encode(), (ip_address, 9999))
+            time.sleep(0.03)
+            udp_socket.sendto(data.encode(), (ip_address, 3333))
+            
+            time.sleep(1)   # 강민석이 바꿈
+            udp_socket.sendto(deg_0.encode(), (ip_address, 3333))
+            
+            time.sleep(0.2)
 
-# ---------------------------------------------------y_p calc-----------------------------------------------------------
+    # ---------------------------------------------------y_p calc-----------------------------------------------------------
 
-    if x_p > 55:
-        x_p = 55
-    elif x_p < -55:
-        x_p = -55
+        if x_p > 55:
+            x_p = 55
+        elif x_p < -55:
+            x_p = -55
 
 # ----------------------------------------------------Step Calc---------------------------------------------------------
 
