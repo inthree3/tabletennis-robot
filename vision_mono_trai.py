@@ -158,8 +158,9 @@ def predict():
             slope = (ball_array[1][0] - ball_array[0][0]) / (ball_array[1][1] - ball_array[0][1])
         else:
             print("denominator is zero")
-        slope_send = math.atan(-slope)
-        print("deg_send : ", math.degrees(slope_send))
+        deg_send = math.degrees(math.atan(-slope))
+        deg_0 =f"{0},{0}"
+        print("deg_send : ", deg_send)
     else:
         slope=0
 
@@ -184,8 +185,11 @@ def predict():
         udp_socket.sendto(str(x_p).encode(), (ip_address, 9999))
         time.sleep(0.03)
         udp_socket.sendto(str(1).encode(), (ip_address, 3333))
+        data= f"{deg_send},{1}"
+        udp_socket.sendto(data.encode(), (ip_address, 6666))
         time.sleep(1)   # 강민석이 바꿈
         udp_socket.sendto(str(0).encode(), (ip_address, 3333))
+        udp_socket.sendto(deg_0.encode(), (ip_address, 6666))
         time.sleep(0.5)
 
 # ---------------------------------------------------y_p calc-----------------------------------------------------------
