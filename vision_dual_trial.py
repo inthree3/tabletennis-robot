@@ -14,18 +14,26 @@ def nothing(x):
 def vision_set(print_std):
     # while True:
 
-    global mapx1, mapy1, mask1, cap1
-    global centerX, centerY
-   
+    global mapx0, mapx1, mapy0, mapy1, mask0, mask1, cap0, cap1
+    global ball_3D_temp, ball_3D
     # global ball_cam0, ball_cam1
 
+    ball_cam0 = np.array([0, 0])
     ball_cam1 = np.array([0, 0])
 
+    ret_0, frame_0 = cap0.read()
     ret_1, frame_1 = cap1.read()
 
+    cv2.imshow('src_0', frame_0)
+    src_0 = cv2.remap(frame_0, mapx0, mapy0, cv2.INTER_LINEAR)
+    src_0 = cv2.copyTo(src_0, mask0)
+
     cv2.imshow('src_1', frame_1)
-    src_1 = cv2.remap(frame_1, mapx1, mapy1, cv2.INTER_LINEAR)
+    src_1 = cv2.remap(frame_1, mapx0, mapy0, cv2.INTER_LINEAR)
     src_1 = cv2.copyTo(src_1, mask1)
+
+    cv2.imshow('src_0', src_0)
+    cv2.imshow('src_1', src_1)
 
     #show current 3D points through mouse click
     # cv2.imshow('current_point0', src_0) 
@@ -34,7 +42,9 @@ def vision_set(print_std):
     # cv2.setMouseCallback('current_point0', print_3D, 0)
     # cv2.setMouseCallback('current_point1', print_3D, 1)
 
+    src_hsv_0 = cv2.cvtColor(src_0, cv2.COLOR_BGR2HSV)
     src_hsv_1 = cv2.cvtColor(src_1, cv2.COLOR_BGR2HSV)
+
 
     #check for 2D matrix
     def checkPoints(event, x, y, flags, param) :
@@ -58,12 +68,36 @@ def vision_set(print_std):
     mask1 = cv2.morphologyEx(mask1, cv2.MORPH_CLOSE, kernel)
 
     # 마스크 이미지로 원본 이미지에서 범위값에 해당되는 영상 부분을 획득
+    dst_0 = cv2.inRange(src_hsv_0, (hmin_0, smin_0, vmin_0), (hmax_0, smax_0, vmax_0))
     dst_1 = cv2.inRange(src_hsv_1, (hmin_1, smin_1, vmin_1), (hmax_1, smax_1, vmax_1))
+    
+    img_result_0 = cv2.bitwise_and(src_0, src_0, mask=dst_0)
     img_result_1 = cv2.bitwise_and(src_1, src_1, mask=dst_1)
 
+    numOfLabels_0, img_label_0, stats_0, centroids_0 = cv2.connectedComponentsWithStats(dst_0)
     numOfLabels_1, img_label_1, stats_1, centroids_1 = cv2.connectedComponentsWithStats(dst_1)
 
     # centroids==무게중심 좌표(x,y)
+
+    for idx, centroid in enumerate(centroids_0):
+        if stats_0[idx][0] == 0 and stats_0[idx][1] == 0:
+            continue
+
+        if np.any(np.isnan(centroid)):
+            continue
+
+        x, y, width, height, area = stats_0[idx]
+        centerX, centerY = int(centroid[0]), int(centroid[1])
+        # print(centerX, centerY)
+
+        if 100 < area < 5000:
+            # 일정 범위 이상 & 이하인 부분에 대해서만 centroids 값 반환
+
+            cv2.circle(src_0, (centerX, centerY), 10, (0, 0, 255), 10)
+            cv2.rectangle(src_0, (x, y), (x + width, y + height), (0, 0, 255))
+            ball_cam0 = np.array([centroid[0], centroid[1]], dtype=float)
+
+
 
     for idx, centroid in enumerate(centroids_1):
 
@@ -82,11 +116,10 @@ def vision_set(print_std):
             cv2.rectangle(src_1, (x, y), (x + width, y + height), (0, 0, 255))
             ball_cam1 = np.array([centroid[0], centroid[1]], dtype=float)
 
-        #centerX = ball_cam1[0]
-        #centerY = ball_cam1[1]
 
     # Display
 
+    cv2.imshow('src_0', src_0)
     # cv2.imshow('dst_0', dst_0)
     # cv2.imshow('img_result_0', img_result_0)
 
@@ -94,21 +127,22 @@ def vision_set(print_std):
     # cv2.imshow('dst_1', dst_1)
     # cv2.imshow('img_result_1', img_result_1)
 
-    if print_std%5==0:
-        print('')
-        print('-----------------------------------------')
-        print(ball_cam1)
+#    if print_std%5==0:
+#        print('')
+#        print('-----------------------------------------')
+#        print(ball_cam1)
         
 
 
 
 def predict():
     global ball_array
+    global z_array
     global centerX, centerY
     global temp_0
-    global slope, slope_temp, slope_send #only 'slope' is used
+    global slope, slope_z, deg_send #only 'slope' is used
     global x_p
-    global i, j
+    global j
     global impact
     global pcnt
 
@@ -147,7 +181,18 @@ def predict():
     j=0
     x_p = (slope * (-230 - ball_array[1][1])  + ball_array[1][0] - 580) * 0.35
 
+
+
+    #z 좌표 범위 지정
+    if z_array[0][0]!=centerX and z_array[0][1]!=centerY:
+        z_array.append([centerX, centerY])
     
+    if z_array[1][1] # - 탁구대 가장 아래 z 좌표 != 0:
+        if z_array[1][1] - z_array[0][1]!=0:
+            slope_z = (z_array[1][0] - z_array)
+
+
+
 
 
     if impact==1 and cnt > 0 and ball_array[1][1]-ball_array[0][1]<0:
@@ -239,6 +284,7 @@ def reset_params():
 
     impact = 0
     ball_array = []
+    z_array = []
     temp_0 = 1
     slope = 0
     slope_temp = 0
@@ -284,6 +330,7 @@ if __name__ == '__main__':
     centerY=480
     centerX=760
     ball_array = [[0,0],[0,0]]
+    z_array = [[0,0],[0,0]]
     impact=0
     pcnt = 0
     cnt = 2
