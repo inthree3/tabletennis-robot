@@ -255,6 +255,16 @@ def predict(tm):
 # elif temp_0 == 1 and ball_3D[1] > 11.5:
 #     temp_0 = 0
 
+#print the text sparsely so that research can read the log simultaneously.
+def sparsePrint(*texts):
+    global print_std
+    
+    if print_std%10:
+        for text in texts:
+            print(text, end="")
+        print_std=0
+
+    print_std+=1
 
 def reset_params():
     global curr_p, prev_p
@@ -262,6 +272,7 @@ def reset_params():
     global temp_0
     global ball_array
     global x_p
+    global speed
 
     impact = 0
     ball_array = []
@@ -415,8 +426,6 @@ if __name__ == '__main__':
     tm = cv2.TickMeter()
     
     # the standard for printing current state
-    print_std=0
-    print_now=1
     cnt = 2
     pcnt = 0
 
@@ -442,14 +451,14 @@ if __name__ == '__main__':
 
         predict(tm)
 
-        if print_std%print_now==0:
-            print("centerX: ", centerX)
-            print("centerY: ", centerY)
+        
+        sparsePrint("centerX: ", centerX)
+        sparsePrint("centerY: ", centerY)
 
-        if print_std%print_now==0:
-            print("impact: ", impact)
+        
+        sparsePrint("impact: ", impact)
 
-        print("cnt : ", cnt)
+        sparsePrint("cnt : ", cnt)
         
 
 
@@ -457,11 +466,10 @@ if __name__ == '__main__':
         #     print("temp_0: (ignored)", temp_0)
 
         tm.stop()
-        if print_std%print_now==0:
-            print('Calc time : {}ms.'.format(tm.getTimeMilli()))
-            print_std=0
+        
+        sparsePrint('Calc time : {}ms.'.format(tm.getTimeMilli()))
+ 
 
-        print_std+=1
 
     cv2.destroyAllWindows()
     cap1.release()
