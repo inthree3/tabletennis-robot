@@ -31,7 +31,7 @@ def click_color_1(event, x, y, flags, params):
 
 
 
-def vision_set(print_std):
+def vision_set():
     # while True:
 
     global mapx1, mapy1, mask1, cap1
@@ -116,10 +116,10 @@ def vision_set(print_std):
     # cv2.imshow('dst_1', dst_1)
     # cv2.imshow('img_result_1', img_result_1)
 
-    if print_std%5==0:
-        print('')
-        print('-----------------------------------------')
-        print(ball_cam1)
+    
+    sparsePrint('')
+    sparsePrint('-----------------------------------------')
+    sparsePrint(ball_cam1)
         
 
 
@@ -172,10 +172,8 @@ def predict(tm):
     j=0
     x_p = (slope * (-230 - ball_array[1][1])  + ball_array[1][0] - 580) * 0.35
 
-
-    
-
-
+    # delay based on the ball's speed for more accurate impact timing
+    # time.sleep(speed)
     if impact==1 and cnt > 0 and ball_array[1][1]-ball_array[0][1]<0:
         print("impact detection succeeded")
         print("slope: ", slope)
@@ -273,6 +271,7 @@ def reset_params():
     global ball_array
     global x_p
     global speed
+    global print_std
 
     impact = 0
     ball_array = []
@@ -283,8 +282,10 @@ def reset_params():
     prev_p=[0,0]
     data_reset = str(0)
     speed=0
+    print_std=0
     udp_socket.sendto(data_reset.encode(), (ip_address, 9999))
     print('reset!')
+    
 
 
 if __name__ == '__main__':
@@ -433,7 +434,7 @@ if __name__ == '__main__':
 
         tm.reset()
         tm.start()
-        vision_set(print_std)
+        vision_set()
 
         if cv2.waitKey(1) & 0xFF == ord('r'):
             reset_params()
@@ -449,6 +450,7 @@ if __name__ == '__main__':
             impact = 0
             cnt = 2
 
+        #parameter tm is for calculating the speed of the ball
         predict(tm)
 
         
