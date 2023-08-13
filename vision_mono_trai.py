@@ -99,7 +99,7 @@ def vision_set(print_std):
         
 
         if 100 < area < 5000:
-            # 일정 범위 이상 & 이하인 부분에 대해서만 centroids 값 반환
+            # 일정 범위 이상 & 이하인 부분에 대해서만 centroids 값 반환 (depends on the camera setting)
             cv2.circle(src_1, (int(centerX), int(centerY)), 10, (0, 0, 255), 10)
             cv2.rectangle(src_1, (x, y), (x + width, y + height), (0, 0, 255))
             ball_cam1 = np.array([centroid[0], centroid[1]], dtype=float)
@@ -123,8 +123,7 @@ def vision_set(print_std):
         
 
 
-
-def predict():
+def predict(tm):
     global ball_array
     global centerX, centerY
     global temp_0
@@ -133,6 +132,7 @@ def predict():
     global i, j
     global impact
     global pcnt
+    global speed
 
 
     #the condition at which the ball is going over the net (temp_0==1)
@@ -154,8 +154,11 @@ def predict():
         # print("center_y", centerY)
         # print("ball_array_x", ball_array[1][0])
         # print("ball_array_y", ball_array[1][1])
+        #if the denominator is not zero
         if ball_array[1][1] - ball_array[0][1]!=0:
             slope = (ball_array[1][0] - ball_array[0][0]) / (ball_array[1][1] - ball_array[0][1])
+            speed = math.sqrt((ball_array[1][0] - ball_array[0][0])**2+(ball_array[1][1] - ball_array[0][1])**2)
+            
         else:
             print("denominator is zero")
         deg_send = math.degrees(math.atan(-slope))
@@ -168,6 +171,7 @@ def predict():
     # x_p = slope * 24 + 0
     j=0
     x_p = (slope * (-230 - ball_array[1][1])  + ball_array[1][0] - 580) * 0.35
+
 
     
 
@@ -267,6 +271,7 @@ def reset_params():
     curr_p=[0,0]
     prev_p=[0,0]
     data_reset = str(0)
+    speed=0
     udp_socket.sendto(data_reset.encode(), (ip_address, 9999))
     print('reset!')
 
@@ -309,6 +314,7 @@ if __name__ == '__main__':
     impact=0
     pcnt = 0
     cnt = 2
+    speed=0
 
     i_main = 0
     h, w = np.array([720, 1280])
@@ -434,7 +440,7 @@ if __name__ == '__main__':
             impact = 0
             cnt = 2
 
-        predict()
+        predict(tm)
 
         if print_std%print_now==0:
             print("centerX: ", centerX)
