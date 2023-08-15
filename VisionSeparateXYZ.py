@@ -9,43 +9,10 @@ import math
 def nothing(x):
     pass
 
-def click_color_0(event, x, y, flags, params):
-    #global vars declaration
-    global hmin_0, hmax_0, smin_0, smax_0, vmin_0, vmax_0
-    tolerance=40
-
-    if event == cv2.EVENT_LBUTTONDBLCLK:
-        selected_color=params[y, x]
-        hsv_color=cv2.cvtColor(np.uint8([[selected_color]]), cv2.COLOR_BGR2HSV)
-        hue=int(hsv_color[0][0][0]) #for cv2.inRange error being resolved
-        shade=int(hsv_color[0][0][1])
-        value=int(hsv_color[0][0][2])
-        lower_color=[max(0,hue-tolerance/2), max(0,shade-tolerance), max(0,value-3*tolerance)]
-        upper_color=[min(255, hue+tolerance/2), min(255, shade+3*tolerance), min(255,value+3*tolerance)]
-
-        #set the color range as global
-        [hmin_0, smin_0, vmin_0]=lower_color
-        [hmax_0, smax_0, vmax_0]=upper_color
-        print("Selected HSV Range is ", lower_color, upper_color)
-
-def click_color_1(event, x, y, flags, params):
-    #global vars declaration
-    global hmin_1, hmax_1, smin_1, smax_1, vmin_1, vmax_1
-    tolerance=40 #set color range width
-
-    if event == cv2.EVENT_LBUTTONDBLCLK:
-        selected_color=params[y, x]
-        hsv_color=cv2.cvtColor(np.uint8([[selected_color]]), cv2.COLOR_BGR2HSV)
-        hue=int(hsv_color[0][0][0]) #for cv2.inRange error being resolved
-        shade=int(hsv_color[0][0][1])
-        value=int(hsv_color[0][0][2])
-        lower_color=[max(0,hue-tolerance/2), max(0,shade-tolerance), max(0,value-3*tolerance)]
-        upper_color=[min(255, hue+tolerance/2), min(255, shade+3*tolerance), min(255,value+3*tolerance)]
-        #set the color range as global
-        [hmin_1, smin_1, vmin_1]=lower_color
-        [hmax_1, smax_1, vmax_1]=upper_color
-        print("Selected HSV Range is ", lower_color, upper_color)
-
+#check for 2D matrix
+def checkPoints(event, x, y, flags, param) :
+    if event == cv2.EVENT_LBUTTONDOWN :
+        print(f'current point of {param} (x, y) : ', x, y)
 
 def vision_set():
     # while True:
@@ -85,11 +52,6 @@ def vision_set():
     src_hsv_0 = cv2.cvtColor(src_0, cv2.COLOR_BGR2HSV)
     src_hsv_1 = cv2.cvtColor(src_1, cv2.COLOR_BGR2HSV)
     
-    #check for 2D matrix
-    def checkPoints(event, x, y, flags, param) :
-        if event == cv2.EVENT_LBUTTONDOWN :
-            print('current (x, y) : ', x, y)
-
     # cv2.setMouseCallback('src_0', checkPoints)
 
 
@@ -129,7 +91,7 @@ def vision_set():
         centerX, centerY = int(centroid[0]), int(centroid[1])
         # print(centerX, centerY)
 
-        if 100 < area < 5000:
+        if 100 < area < 1000:
             # 일정 범위 이상 & 이하인 부분에 대해서만 centroids 값 반환
 
             cv2.circle(src_0, (centerX, centerY), 10, (0, 0, 255), 10)
@@ -147,9 +109,9 @@ def vision_set():
             continue
 
         x, y, width, height, area = stats_1[idx]
-        
+        centerX, centerY = int(centroid[0]), int(centroid[1])
 
-        if 100 < area < 5000:
+        if 100 < area < 1000:
             # 일정 범위 이상 & 이하인 부분에 대해서만 centroids 값 반환
             cv2.circle(src_1, (int(centerX), int(centerY)), 10, (0, 0, 255), 10)
             cv2.rectangle(src_1, (x, y), (x + width, y + height), (0, 0, 255))
@@ -188,7 +150,7 @@ def predict():
     global pcnt
     global X, Z, v_x, t
     global speed_tm
-
+   
 
    
 
@@ -212,10 +174,10 @@ def predict():
             slope = (ball_array[1][0] - ball_array[0][0]) / (ball_array[1][1] - ball_array[0][1])
         else:
             print("denominator is zero")
-        deg_send = math.degrees(math.atan(-slope))
-        deg_0 =f"{0},{0}"
-        data= f"{1},{deg_send}"
-        print("deg_send : ", deg_send)
+        # deg_send = math.degrees(math.atan(-slope))
+        # deg_0 =f"{0},{0}"
+        # data= f"{1},{deg_send}"
+        # print("deg_send : ", deg_send)
     else:
         slope=0
 
@@ -224,13 +186,19 @@ def predict():
     j=0
     x_p = (slope * (-230 - ball_array[1][1])  + ball_array[1][0] - 580) * 0.35
 
+    #slope redefine based on x_p
+    deg_send = x_p*(5/11)
+    deg_0 =f"{0},{0}"
+    data= f"{1},{deg_send}"
+    print("deg_send : ", deg_send)
+
 
 
     #z 좌표 범위 지정
     
 
     if z_array[0][0] != ball_cam1[0] and z_array[0][1]!=ball_cam1[1]:
-        if speed_tm>0:
+        if speed_tm.getAvgTimeMilli()>0:
             speed_tm.stop()
         
         tm_diff=speed_tm.getTimeMilli()
@@ -245,9 +213,10 @@ def predict():
 
             
     X = 970 - z_array[0][0]
-    v_x = (z_array[1][0] - z_array[0][0]) / tm_z
-    t = X / v_x
-    Z = X*(z_array[1][1] - z_array[0][1]) / (z_array[1][0] - z_array[0][0]) - 9.8*(X**2) / 2*((v_x)**2)
+    if z_array[1][0] - z_array[0][0]!=0 and tm_diff!=0:
+        v_x = (z_array[1][0] - z_array[0][0]) / tm_diff
+        t = X / v_x
+        Z = X*(z_array[1][1] - z_array[0][1]) / (z_array[1][0] - z_array[0][0]) - 9.8*(X**2) / 2*((v_x)**2)
 
 
 
@@ -334,7 +303,7 @@ def predict():
 
 #print the text sparsely so that research can read the log simultaneously.
 def sparsePrint(*texts):
-    global print_std
+    print_std=20
     
     if print_std%10==0:
         for text in texts:
@@ -386,7 +355,7 @@ if __name__ == '__main__':
 
     #set initial color range
     lower_color = [0, 87, 89]
-    upper_color = [63, 255, 255]
+    upper_color = [63, 255, 200]
 
 
     [hmin_0, smin_0, vmin_0]=lower_color
@@ -441,7 +410,7 @@ if __name__ == '__main__':
     cam0_int = np.array([[814.49848129, 0., 568.49302368], [0., 805.90235641, 369.59529032], [0., 0., 1.]])
     cam1_int = np.array([[745.99261893, 0.,  625.02714628], [0., 748.10811003, 315.57402011], [0., 0., 1.]])
     
-    mtx1 = cam1_int
+    mtx0 = cam0_int
     mtx1 = cam1_int
 
     #hstack: 가로로 두 array 붙이는 연산
@@ -449,15 +418,29 @@ if __name__ == '__main__':
     dist1 = np.array([1.52562640e-01, -4.31254941e-01, -4.27185613e-02,  2.25366445e-04, -2.04619580e-01])
 
     print('intrinsics Matrix')
+    print('')
+    print(mtx0)
+    print(dist0)
     print("")
     print(mtx1)
     print(dist1)
 
     # Calibration for new camera matrix
 
+    newcameraMtx0, roi0 = cv2.getOptimalNewCameraMatrix(cam0_int, dist0, (w, h), 1, (w, h))
+    print(newcameraMtx0)
+    print("")
     newcameraMtx1, roi1 = cv2.getOptimalNewCameraMatrix(cam1_int, dist1, (w, h), 1, (w, h))
     print(newcameraMtx1)
+
+    print(roi0)
     print(roi1)
+
+    # T0 = np.array([0,0,0]) # Translation vector
+    RT0 = np.zeros((3, 4))  # combined Rotation/Translation matrix
+    RT0[:3, :3] = R0
+    RT0[:3, 3] = T0
+    P0 = np.dot(newcameraMtx0, RT0)  # Projection matrix
 
     # # define pose 1
 
@@ -540,6 +523,7 @@ if __name__ == '__main__':
     while True:
 
         tm.reset()
+
         tm.start()
         vision_set()
 
