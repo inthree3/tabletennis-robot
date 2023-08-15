@@ -223,7 +223,7 @@ def predict():
         speed_tm.start()
         
 
-    if impact==1 and impact_std==True:
+    if impact==1 and impact_std==True and ball_array[1][1] < ball_array[0][1]:
         print("impact detection succeeded")
         print("slope: ", slope)
         print("center_x", centerX)
@@ -237,11 +237,10 @@ def predict():
         
         #predicted x position
         udp_socket.sendto(str(x_p).encode(), (ip_address, 9999))
-        time.sleep(0.03)
 
         impact_std=False
 
-    if impact_z==1 and impactz_std==True:
+    if impact_z==1 and impactz_std==True and len(z_array) ==2 and z_array[1][0] > z_array[0][0]:
         print("impact_z detection succeeded")
 
         #impact, degree
@@ -558,7 +557,7 @@ if __name__ == '__main__':
             impact = 0
             impact_std = True
 
-        if ball_cam1[0] > 740 and [ball_cam1[0], ball_cam1[1]]!=[0,0]:
+        if ball_cam1[0] > 400 and [ball_cam1[0], ball_cam1[1]]!=[0,0]:
             impact_z = 1
         else:
             impact_z = 0
