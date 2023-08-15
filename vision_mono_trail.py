@@ -254,7 +254,7 @@ def reset_params():
     global ball_array
     global x_p
     global speed
-    global print_std
+
 
     impact = 0
     ball_array = []
@@ -265,7 +265,6 @@ def reset_params():
     prev_p=[0,0]
     data_reset = str(0)
     speed=0
-    print_std=0
     udp_socket.sendto(data_reset.encode(), (ip_address, 9999))
     print('reset!')
     
