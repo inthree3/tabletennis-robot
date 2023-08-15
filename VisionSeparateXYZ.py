@@ -150,6 +150,7 @@ def predict():
     global impact
     global X, Z, v_x, t
     global speed_tm
+    global impact_std
 
    
 
@@ -384,7 +385,7 @@ if __name__ == '__main__':
     ball_array = [[0,0],[0,0]]
     z_array = [[0,0],[0,0]]
     impact=0
-    impact_std = 2
+    impact_std = True
     Z=0
     X=0
 
@@ -546,7 +547,7 @@ if __name__ == '__main__':
             break
 
 
-        if ball_cam0[1] < 150 and [ball_cam0[0], ball_cam0[1]]!=[0,0]: #maybe std at which the robot should impact
+        if len(z_array)==2 and ball_cam0[1] < 150 and [ball_cam0[0], ball_cam0[1]]!=[0,0]: #maybe std at which the robot should impact
             impact = 1
         else :
             impact = 0
