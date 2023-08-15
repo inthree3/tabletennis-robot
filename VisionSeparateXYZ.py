@@ -21,6 +21,7 @@ def vision_set():
     global ball_3D_temp, ball_3D
     global ball_cam0, ball_cam1
     global speed_tm
+    global centerX, centerY
 
     ball_cam0 = np.array([0, 0])
     ball_cam1 = np.array([0, 0])
@@ -150,7 +151,6 @@ def predict():
     global pcnt
     global X, Z, v_x, t
     global speed_tm
-   
 
    
 
@@ -161,8 +161,8 @@ def predict():
     # if temp_0 == 1 and centerY > 200:
     # ball_array [0,0],[0,0] --> ball_array[0]: temp_point, ball_array[1]: curr_point
 
-    if ball_array[0][0]!=ball_cam1[0] and ball_array[0][1]!=ball_cam1[1]:
-        ball_array.append([ball_cam1[0], ball_cam1[1]])
+    if ball_array[0][0]!=ball_cam0[0] and ball_array[0][1]!=ball_cam0[1]:
+        ball_array.append([ball_cam0[0], ball_cam0[1]])
         ball_array.pop(0)
             
     if ball_array[1][1] - 647 !=0:
@@ -196,28 +196,35 @@ def predict():
 
     #z 좌표 범위 지정
     
+    if ball_cam1[0]==0 and ball_cam1[0]==0:
+        z_array=[]
 
-    if z_array[0][0] != ball_cam1[0] and z_array[0][1]!=ball_cam1[1]:
+    if (ball_cam1[0]!=0 and ball_cam1[1]!=0) and (-len(z_array)==0 or (len(z_array)==1 and z_array[0][0] != ball_cam1[0] and z_array[0][1]!=ball_cam1[1])):
         if speed_tm.getAvgTimeMilli()>0:
             speed_tm.stop()
         
         tm_diff=speed_tm.getTimeMilli()
 
-        z_array.append([ball_cam0[0], ball_cam0[1]])
-        if z_array[1][1] - z_array[0][1] > 0:
+        z_array.append([ball_cam1[0], ball_cam1[1]])
+        if len(z_array)==2 and z_array[1][1] - z_array[0][1] > 0:
             z_array.pop(0)
+
+        if len(z_array)==2 and z_array[1][1] - z_array[0][1] < 0:
+            X = 970 - z_array[0][0]
+            if tm_diff!=0:
+                v_x = (z_array[1][0] - z_array[0][0]) / tm_diff
+                t = X / v_x
+                Z = X*(z_array[1][1] - z_array[0][1]) / (z_array[1][0] - z_array[0][0]) - 9.8*(X**2) / 2*((v_x)**2)
+
 
         speed_tm.reset()
         speed_tm.start()
             
 
-            
-    X = 970 - z_array[0][0]
-    if z_array[1][0] - z_array[0][0]!=0 and tm_diff!=0:
-        v_x = (z_array[1][0] - z_array[0][0]) / tm_diff
-        t = X / v_x
-        Z = X*(z_array[1][1] - z_array[0][1]) / (z_array[1][0] - z_array[0][0]) - 9.8*(X**2) / 2*((v_x)**2)
 
+
+    
+       
 
 
 
@@ -233,6 +240,7 @@ def predict():
         print("ball_array_y2", ball_array[1][1])
         print("current x" , ball_array[1][0])
         print("result x_p: ", x_p)
+        
         #predicted x position
         udp_socket.sendto(str(x_p).encode(), (ip_address, 9999))
         time.sleep(0.03)
@@ -242,8 +250,10 @@ def predict():
         #set deg to zero (set to initial)
         udp_socket.sendto(deg_0.encode(), (ip_address, 3333))
         
-       
-
+    print("result z_p: ", Z)
+    print("z_array: ", z_array)
+    print("X: ", X)
+    
 # ---------------------------------------------------y_p calc-----------------------------------------------------------
 
     if x_p > 55:
@@ -376,6 +386,9 @@ if __name__ == '__main__':
     impact=0
     pcnt = 0
     cnt = 2
+    Z=0
+    X=0
+
 
     i_main = 0
     h, w = np.array([720, 1280])
@@ -534,7 +547,7 @@ if __name__ == '__main__':
             break
 
 
-        if centerY < 150 and [centerX, centerY]!=[0,0]: #maybe std at which the robot should impact
+        if ball_cam0[1] < 150 and [ball_cam0[0], ball_cam0[1]]!=[0,0]: #maybe std at which the robot should impact
             impact = 1
             cnt = cnt - 1
         else :
