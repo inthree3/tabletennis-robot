@@ -147,10 +147,10 @@ def predict():
     global slope, slope_z, deg_send #only 'slope' is used
     global x_p
     global j
-    global impact
+    global impact, impact_z
     global X, Z, v_x, t
     global speed_tm
-    global impact_std
+    global impact_std, impactz_std
 
    
 
@@ -161,7 +161,7 @@ def predict():
     # if temp_0 == 1 and centerY > 200:
     # ball_array [0,0],[0,0] --> ball_array[0]: temp_point, ball_array[1]: curr_point
 
-    if ball_array[0][0]!=ball_cam0[0] and ball_array[0][1]!=ball_cam0[1]:
+    if ball_array[0][0]!=ball_cam0[0] and ball_array[0][1]!=ball_cam0[1] and ball_cam0[0]!=0 and ball_cam0[1]!=0:
         ball_array.append([ball_cam0[0], ball_cam0[1]])
         ball_array.pop(0)
             
@@ -214,22 +214,16 @@ def predict():
             if tm_diff!=0:
                 v_x = (z_array[1][0] - z_array[0][0]) / tm_diff
                 t = X / v_x
-                Z = X*(z_array[1][1] - z_array[0][1]) / (z_array[1][0] - z_array[0][0]) - 9.8*(X**2) / 2*((v_x)**2)
-
+                Z = (X*(z_array[1][1] - z_array[0][1]) / (z_array[1][0] - z_array[0][0])) - (9.8*(X**2) / 2*((v_x)**2))
+                print("v_x: ", v_x)
+                print("t: ", t)
+                print("Z: ", Z)
 
         speed_tm.reset()
         speed_tm.start()
-            
+        
 
-
-
-    
-       
-
-
-
-
-    if impact==1 and impact_std==True and ball_array[1][1]-ball_array[0][1]<0:
+    if impact==1 and impact_std==True:
         print("impact detection succeeded")
         print("slope: ", slope)
         print("center_x", centerX)
@@ -244,12 +238,21 @@ def predict():
         #predicted x position
         udp_socket.sendto(str(x_p).encode(), (ip_address, 9999))
         time.sleep(0.03)
+
+        impact_std=False
+
+    if impact_z==1 and impactz_std==True:
+        print("impact_z detection succeeded")
+
         #impact, degree
         udp_socket.sendto(data.encode(), (ip_address, 3333)) 
-        
+        time.sleep(1)
+
         #set deg to zero (set to initial)
         udp_socket.sendto(deg_0.encode(), (ip_address, 3333))
-        impact_std=False
+
+        impactz_std=False
+
         
     print("result z_p: ", Z)
     print("z_array: ", z_array)
@@ -385,7 +388,9 @@ if __name__ == '__main__':
     ball_array = [[0,0],[0,0]]
     z_array = [[0,0],[0,0]]
     impact=0
+    impact_z=0
     impact_std = True
+    impactz_std = True
     Z=0
     X=0
 
@@ -547,11 +552,17 @@ if __name__ == '__main__':
             break
 
 
-        if len(z_array)==2 and ball_cam0[1] < 150 and [ball_cam0[0], ball_cam0[1]]!=[0,0]: #maybe std at which the robot should impact
+        if ball_cam0[1] < 150 and [ball_cam0[0], ball_cam0[1]]!=[0,0]: #maybe std at which the robot should impact
             impact = 1
         else :
             impact = 0
             impact_std = True
+
+        if ball_cam1[0] > 740 and [ball_cam1[0], ball_cam1[1]]!=[0,0]:
+            impact_z = 1
+        else:
+            impact_z = 0
+            impactz_std = True
 
         predict()
 
