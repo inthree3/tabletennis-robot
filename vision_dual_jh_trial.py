@@ -16,7 +16,7 @@ def vision_set(print_std):
 
     global mapx0, mapx1, mapy0, mapy1, mask0, mask1, cap0, cap1
     global ball_3D_temp, ball_3D
-    # global ball_cam0, ball_cam1
+    global ball_cam0, ball_cam1
 
     ball_cam0 = np.array([0, 0])
     ball_cam1 = np.array([0, 0])
@@ -138,6 +138,7 @@ def vision_set(print_std):
 def predict():
     global ball_array
     global z_array
+    global ball_cam1, ball_cam0
     global centerX, centerY
     global temp_0
     global slope, slope_z, deg_send #only 'slope' is used
@@ -148,7 +149,7 @@ def predict():
     global X, Z, v_x, t
 
 
-    tm = cv2.TickMeter()
+    tm_z = cv2.TickMeter()
 
     #the condition at which the ball is going over the net (temp_0==1)
     # print("temp_0 : ", temp_0)
@@ -186,15 +187,18 @@ def predict():
 
     #z 좌표 범위 지정
     
-    if z_array[0][0] != ball_cam0[0] and ball_cam0!=ball_cam0[1] and ball_cam0[1]>y_p:
-        tm.reset()
-        tm.start()
-        z_array.append([ball_cam0[0], ball_cam0[1]])
+    if z_array[0][0] != ball_cam1[0] and z_array[0][1]!=ball_cam1[1]:
+        tm_z.reset()
+        if z_array[1][1] - z_array[0][1] < 0:
+            tm_z.start()
+            z_array.pop(0)
+            z_array.append([ball_cam0[0], ball_cam0[1]])
+
         if z_array[1][1] != 0:
-            tm.stop()
+            tm_z.stop()
             
-    X = (x_robot) - z_array[0][0]
-    v_x = (z_array[1][0] - z_array[0][0]) / tm
+    X = 970 - z_array[0][0]
+    v_x = (z_array[1][0] - z_array[0][0]) / tm_z
     t = X / v_x
     Z = X*(z_array[1][1] - z_array[0][1]) / (z_array[1][0] - z_array[0][0]) - 9.8*(X**2) / 2*((v_x)**2)
 

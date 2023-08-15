@@ -48,10 +48,13 @@ def click_color_1(event, x, y, flags, params):
 
 #function for showing the current 3D point
 def print_3D(event, x, y, flags, params):
-        global ball_3D
         if event == cv2.EVENT_LBUTTONDBLCLK:
-            print(f"current point of cam{params}: ", ball_3D)
+            print(f"current point of cam{params}: ", [x, y])
 
+#check for 2D matrix
+def checkPoints(event, x, y, flags, param) :
+    if event == cv2.EVENT_LBUTTONDOWN :
+        print(f'current point of {param} (x, y) : ', x, y)
 
 def vision_set(print_std):
     # while True:
@@ -81,20 +84,18 @@ def vision_set(print_std):
     # cv2.imshow('current_point0', src_0) 
     # cv2.imshow('current_point1', src_1)
 
-    # cv2.setMouseCallback('current_point0', print_3D, 0)
-    # cv2.setMouseCallback('current_point1', print_3D, 1)
+
+    cv2.setMouseCallback('src_0', checkPoints, 0)
+    cv2.setMouseCallback('src_1', checkPoints, 1)
 
 
     src_hsv_0 = cv2.cvtColor(src_0, cv2.COLOR_BGR2HSV)
     src_hsv_1 = cv2.cvtColor(src_1, cv2.COLOR_BGR2HSV)
 
-    cv2.setMouseCallback('src_0', click_color_0, src_hsv_0)
-    cv2.setMouseCallback('src_1', click_color_1, src_hsv_1)
+    # cv2.setMouseCallback('src_0', click_color_0, src_hsv_0)
+    # cv2.setMouseCallback('src_1', click_color_1, src_hsv_1)
 
-    #check for 2D matrix
-    def checkPoints(event, x, y, flags, param) :
-        if event == cv2.EVENT_LBUTTONDOWN :
-            print('current (x, y) : ', x, y)
+    
 
     # cv2.setMouseCallback('src_0', checkPoints)
 
@@ -134,7 +135,7 @@ def vision_set(print_std):
         centerX, centerY = int(centroid[0]), int(centroid[1])
         # print(centerX, centerY)
 
-        if 100 < area < 8000:
+        if 100 < area < 5000:
             # 일정 범위 이상 & 이하인 부분에 대해서만 centroids 값 반환
 
             cv2.circle(src_0, (centerX, centerY), 10, (0, 0, 255), 10)
@@ -152,19 +153,19 @@ def vision_set(print_std):
         x, y, width, height, area = stats_1[idx]
         centerX, centerY = int(centroid[0]), int(centroid[1])
 
-        if 100 < area < 8000:
+        if 100 < area < 5000:
             # 일정 범위 이상 & 이하인 부분에 대해서만 centroids 값 반환
             cv2.circle(src_1, (centerX, centerY), 10, (0, 0, 255), 10)
             cv2.rectangle(src_1, (x, y), (x + width, y + height), (0, 0, 255))
             ball_cam1 = np.array([centroid[0], centroid[1]], dtype=float)
 
-    if ball_cam0[0] != 0 and ball_cam1[0] != 0:
-        # ball_3D=[x, y, z]
-        ball_tri = np.array(cv2.triangulatePoints(P0, P1, ball_cam0, ball_cam1))
-        ball_3D = ball_tri[:3] / ball_tri[-1]
+    # if ball_cam0[0] != 0 and ball_cam1[0] != 0:
+    #     # ball_3D=[x, y, z]
+    #     ball_tri = np.array(cv2.triangulatePoints(P0, P1, ball_cam0, ball_cam1))
+    #     ball_3D = ball_tri[:3] / ball_tri[-1]
 
-    else:
-        ball_3D = ball_3D_temp
+    # else:
+    #     ball_3D = ball_3D_temp
 
     # Display
 
@@ -176,28 +177,33 @@ def vision_set(print_std):
     # cv2.imshow('dst_1', dst_1)
     # cv2.imshow('img_result_1', img_result_1)
 
-    if print_std%5==0:
-        print('')
-        print('-----------------------------------------')
-        print(ball_cam0)
-        print(ball_cam1)
-        print('ball_3D_temp')
-        print(ball_3D_temp)
-        print('ball_3D')
-        print(ball_3D)
+    # if print_std%5==0:
+    #     print('')
+    #     print('-----------------------------------------')
+    #     print(ball_cam0)
+    #     print(ball_cam1)
+    #     print('ball_3D_temp')
+    #     print(ball_3D_temp)
+    #     print('ball_3D')
+    #     print(ball_3D)
 
 
 
 def predict():
 
     global ball_array
-    global temp_0
-    global ball_3D, ball_3D_temp
-    global slope, slope_send, slope_temp #only 'slope' is used
+    global z_array
+    global ball_cam1, ball_cam0
+    global centerX, centerY
+    global slope, slope_z, deg_send #only 'slope' is used
     global x_p
+    global j
+    global impact
+    global pcnt
+    global X, Z, v_x, t
 
     #the condition at which the ball is going over the net (temp_0==1)
-    print("temp_0 : ", temp_0)
+    #print("temp_0 : ", temp_0)
 
     if temp_0 == 1 and ball_3D[1] > 0:
         ball_array[:, 0:1] = ball_3D
@@ -462,7 +468,8 @@ if __name__ == '__main__':
         vision_set(print_std)
 
         if (ball_3D[1] - ball_3D_temp[1]) > 0:
-            predict()
+            #  predict()
+            pass
 
         if cv2.waitKey(1) & 0xFF == ord('r'):
             reset_params()
@@ -475,20 +482,20 @@ if __name__ == '__main__':
         else:
             impact = 0
 
-        if print_std%print_now==0:
-            print("impact: ", impact)
-        data_impact = str(impact)
-        udp_socket.sendto(data_impact.encode(), (ip_address, 3333))
+        # if print_std%print_now==0:
+        #     print("impact: ", impact)
+        # data_impact = str(impact)
+        # udp_socket.sendto(data_impact.encode(), (ip_address, 3333))
 
-        ball_3D_temp = ball_3D
+        # ball_3D_temp = ball_3D
 
-        if print_std%print_now==0:
-            print("temp_0: (ignored)", temp_0)
+        # if print_std%print_now==0:
+        #     print("temp_0: (ignored)", temp_0)
 
-        tm.stop()
-        if print_std%print_now==0:
-            print('Calc time : {}ms.'.format(tm.getTimeMilli()))
-            print_std=0
+        # tm.stop()
+        # if print_std%print_now==0:
+        #     print('Calc time : {}ms.'.format(tm.getTimeMilli()))
+        #     print_std=0
 
         print_std+=1
 

@@ -82,8 +82,8 @@ def vision_set(print_std):
             cv2.rectangle(src_1, (x, y), (x + width, y + height), (0, 0, 255))
             ball_cam1 = np.array([centroid[0], centroid[1]], dtype=float)
 
-        #centerX = ball_cam1[0]
-        #centerY = ball_cam1[1]
+        centerX = ball_cam1[0]
+        centerY = ball_cam1[1]
 
     # Display
 

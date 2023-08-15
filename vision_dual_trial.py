@@ -187,7 +187,7 @@ def predict():
     if z_array[0][0]!=centerX and z_array[0][1]!=centerY:
         z_array.append([centerX, centerY])
     
-    if z_array[1][1] # - 탁구대 가장 아래 z 좌표 != 0:
+    if z_array[1][1]: # - 탁구대 가장 아래 z 좌표 != 0:
         if z_array[1][1] - z_array[0][1]!=0:
             slope_z = (z_array[1][0] - z_array)
 
