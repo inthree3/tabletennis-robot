@@ -440,8 +440,10 @@ if __name__ == '__main__':
 
     cam0_int = np.array([[814.49848129, 0., 568.49302368], [0., 805.90235641, 369.59529032], [0., 0., 1.]])
     cam1_int = np.array([[745.99261893, 0.,  625.02714628], [0., 748.10811003, 315.57402011], [0., 0., 1.]])
-    mtx1 = cam1_int
     
+    mtx1 = cam1_int
+    mtx1 = cam1_int
+
     #hstack: 가로로 두 array 붙이는 연산
     dist0 = np.array([0.3166118, -0.49218699, -0.0046719, -0.03840587, 0.25442361])
     dist1 = np.array([1.52562640e-01, -4.31254941e-01, -4.27185613e-02,  2.25366445e-04, -2.04619580e-01])
@@ -465,11 +467,12 @@ if __name__ == '__main__':
     RT1[:3, 3] = T1
     P1 = np.dot(newcameraMtx1, RT1)
 
+    print(P0)
     print(P1)
 
     
-    mapx1, mapy1 = cv2.initUndistortRectifyMap(mtx1, dist1, None, newcameraMtx1, (w, h), 5)
-    
+    mapx0, mapy0 = cv2.initUndistortRectifyMap(mtx0, dist0, None, newcameraMtx0, (w, h), 5)
+    mapx1, mapy1 = cv2.initUndistortRectifyMap(mtx1, dist1, None, newcameraMtx1, (w, h), 5) 
 
     # CAP_DSHOW 가 그냥 Index Calling에 비해 속도 훨씬 빠름
 
@@ -483,18 +486,25 @@ if __name__ == '__main__':
     cap1.isOpened()
 
     # Camera0_Setting
-
     cap0.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
     cap0.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-    cap1.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-    cap1.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+    
+    cap0.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+    cap0.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+    cap0.set(cv2.CAP_PROP_FRAME_COUNT, 60)
+    cap0.set(cv2.CAP_PROP_POS_MSEC, 11)
+    cap0.set(cv2.CAP_PROP_AUTOFOCUS, 0)
+    cap0.set(cv2.CAP_PROP_FPS, 90)
+    cap0.set(cv2.CAP_PROP_EXPOSURE, -7)
 
-    w_0 = int(cap1.get(cv2.CAP_PROP_FRAME_WIDTH))
-    h_0 = int(cap1.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    w_0 = int(cap0.get(cv2.CAP_PROP_FRAME_WIDTH))
+    h_0 = int(cap0.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
     print("the width and height of the CAM0: ", w_0, h_0)
 
     # Camera1_Setting
+    cap1.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+    cap1.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
     cap1.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
     cap1.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
@@ -506,7 +516,13 @@ if __name__ == '__main__':
     # cap1.set(cv2.CAP_PROP_BRIGHTNESS, 500)
     print("the cap1 fps: ", cap1.get(cv2.CAP_PROP_FPS))
 
-    mask1 = cv2.imread('cam0_mask_cali_v2.jpg', cv2.IMREAD_GRAYSCALE)
+    w_0 = int(cap1.get(cv2.CAP_PROP_FRAME_WIDTH))
+    h_0 = int(cap1.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+    print("the width and height of the CAM1: ", w_0, h_0)
+
+    mask0 = cv2.imread('cam0_mask_cali_v2.jpg', cv2.IMREAD_GRAYSCALE)
+    mask1 = cv2.imread('cam1_mask_cali_v2.jpg', cv2.IMREAD_GRAYSCALE)
 
     # cv2.namedWindow('src')
 
