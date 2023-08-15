@@ -139,16 +139,21 @@ def predict(tm):
             
         else:
             print("denominator is zero")
-        deg_send = math.degrees(math.atan(-slope))
-        deg_0 =f"{0}SE{0}"
-        data= f"{1}SE{deg_send}"
-        print("deg_send : ", deg_send)
+        # deg_send = math.degrees(math.atan(-slope))
+        # deg_0 =f"{0}SE{0}"
+        # data= f"{1}SE{deg_send}"
+        # print("deg_send : ", deg_send)
     else:
         slope=0
 
     # x_p = slope * 24 + 0
     j=0
     x_p = (slope * (-230 - ball_array[1][1])  + ball_array[1][0] - 580) * 0.35
+
+    deg_send = x_p*(9/11)
+    deg_0 =f"{0}SE{0}"
+    data= f"{1}SE{deg_send}"
+    print("deg_send : ", deg_send)
 
     # delay based on the ball's speed for more accurate impact timing
     # time.sleep(speed)
