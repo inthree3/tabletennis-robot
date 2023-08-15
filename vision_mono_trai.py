@@ -140,8 +140,8 @@ def predict(tm):
         else:
             print("denominator is zero")
         deg_send = math.degrees(math.atan(-slope))
-        deg_0 =f"{0},{0}"
-        data= f"{1},{deg_send}"
+        deg_0 =f"{0}SE{0}"
+        data= f"{1}SE{deg_send}"
         print("deg_send : ", deg_send)
     else:
         slope=0
@@ -233,8 +233,8 @@ def predict(tm):
 
 #print the text sparsely so that research can read the log simultaneously.
 def sparsePrint(*texts):
-    global print_std
-    
+    print_std=10
+
     if print_std%10:
         for text in texts:
             print(text, end="")

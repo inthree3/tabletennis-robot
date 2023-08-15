@@ -9,14 +9,51 @@ import math
 def nothing(x):
     pass
 
+def click_color_0(event, x, y, flags, params):
+    #global vars declaration
+    global hmin_0, hmax_0, smin_0, smax_0, vmin_0, vmax_0
+    tolerance=40
+
+    if event == cv2.EVENT_LBUTTONDBLCLK:
+        selected_color=params[y, x]
+        hsv_color=cv2.cvtColor(np.uint8([[selected_color]]), cv2.COLOR_BGR2HSV)
+        hue=int(hsv_color[0][0][0]) #for cv2.inRange error being resolved
+        shade=int(hsv_color[0][0][1])
+        value=int(hsv_color[0][0][2])
+        lower_color=[max(0,hue-tolerance/2), max(0,shade-tolerance), max(0,value-3*tolerance)]
+        upper_color=[min(255, hue+tolerance/2), min(255, shade+3*tolerance), min(255,value+3*tolerance)]
+
+        #set the color range as global
+        [hmin_0, smin_0, vmin_0]=lower_color
+        [hmax_0, smax_0, vmax_0]=upper_color
+        print("Selected HSV Range is ", lower_color, upper_color)
+
+def click_color_1(event, x, y, flags, params):
+    #global vars declaration
+    global hmin_1, hmax_1, smin_1, smax_1, vmin_1, vmax_1
+    tolerance=40 #set color range width
+
+    if event == cv2.EVENT_LBUTTONDBLCLK:
+        selected_color=params[y, x]
+        hsv_color=cv2.cvtColor(np.uint8([[selected_color]]), cv2.COLOR_BGR2HSV)
+        hue=int(hsv_color[0][0][0]) #for cv2.inRange error being resolved
+        shade=int(hsv_color[0][0][1])
+        value=int(hsv_color[0][0][2])
+        lower_color=[max(0,hue-tolerance/2), max(0,shade-tolerance), max(0,value-3*tolerance)]
+        upper_color=[min(255, hue+tolerance/2), min(255, shade+3*tolerance), min(255,value+3*tolerance)]
+        #set the color range as global
+        [hmin_1, smin_1, vmin_1]=lower_color
+        [hmax_1, smax_1, vmax_1]=upper_color
+        print("Selected HSV Range is ", lower_color, upper_color)
 
 
-def vision_set(print_std):
+def vision_set():
     # while True:
 
     global mapx0, mapx1, mapy0, mapy1, mask0, mask1, cap0, cap1
     global ball_3D_temp, ball_3D
     global ball_cam0, ball_cam1
+    global speed_tm
 
     ball_cam0 = np.array([0, 0])
     ball_cam1 = np.array([0, 0])
@@ -42,10 +79,12 @@ def vision_set(print_std):
     # cv2.setMouseCallback('current_point0', print_3D, 0)
     # cv2.setMouseCallback('current_point1', print_3D, 1)
 
+    cv2.setMouseCallback('src_0', checkPoints, 0)
+    cv2.setMouseCallback('src_1', checkPoints, 1)
+
     src_hsv_0 = cv2.cvtColor(src_0, cv2.COLOR_BGR2HSV)
     src_hsv_1 = cv2.cvtColor(src_1, cv2.COLOR_BGR2HSV)
-
-
+    
     #check for 2D matrix
     def checkPoints(event, x, y, flags, param) :
         if event == cv2.EVENT_LBUTTONDOWN :
@@ -127,11 +166,12 @@ def vision_set(print_std):
     # cv2.imshow('dst_1', dst_1)
     # cv2.imshow('img_result_1', img_result_1)
 
-#    if print_std%5==0:
-#        print('')
-#        print('-----------------------------------------')
-#        print(ball_cam1)
-        
+    speed_tm=cv2.TickMeter()
+#   
+    # sparsePrint('')
+    # sparsePrint('-----------------------------------------')
+    # sparsePrint(ball_cam1)
+    
 
 
 
@@ -147,9 +187,10 @@ def predict():
     global impact
     global pcnt
     global X, Z, v_x, t
+    global speed_tm
 
 
-    tm_z = cv2.TickMeter()
+   
 
     #the condition at which the ball is going over the net (temp_0==1)
     # print("temp_0 : ", temp_0)
@@ -187,15 +228,21 @@ def predict():
 
     #z 좌표 범위 지정
     
-    if z_array[0][0] != ball_cam1[0] and z_array[0][1]!=ball_cam1[1]:
-        tm_z.reset()
-        if z_array[1][1] - z_array[0][1] < 0:
-            tm_z.start()
-            z_array.pop(0)
-            z_array.append([ball_cam0[0], ball_cam0[1]])
 
-        if z_array[1][1] != 0:
-            tm_z.stop()
+    if z_array[0][0] != ball_cam1[0] and z_array[0][1]!=ball_cam1[1]:
+        if speed_tm>0:
+            speed_tm.stop()
+        
+        tm_diff=speed_tm.getTimeMilli()
+
+        z_array.append([ball_cam0[0], ball_cam0[1]])
+        if z_array[1][1] - z_array[0][1] > 0:
+            z_array.pop(0)
+
+        speed_tm.reset()
+        speed_tm.start()
+            
+
             
     X = 970 - z_array[0][0]
     v_x = (z_array[1][0] - z_array[0][0]) / tm_z
@@ -285,6 +332,16 @@ def predict():
 # elif temp_0 == 1 and ball_3D[1] > 11.5:
 #     temp_0 = 0
 
+#print the text sparsely so that research can read the log simultaneously.
+def sparsePrint(*texts):
+    global print_std
+    
+    if print_std%10==0:
+        for text in texts:
+            print(text, end="")
+        print_std=0
+
+    print_std+=1
 
 def reset_params():
     global curr_p, prev_p
@@ -320,7 +377,9 @@ if __name__ == '__main__':
 
     # Set Global Variables
 
+    global hmin_0, hmax_0, smin_0, smax_0, vmin_0, vmax_0
     global hmin_1, hmax_1, smin_1, smax_1, vmin_1, vmax_1
+
     global impact
     global centerX, centerY
     global cnt, pcnt
@@ -329,6 +388,9 @@ if __name__ == '__main__':
     lower_color = [0, 87, 89]
     upper_color = [63, 255, 255]
 
+
+    [hmin_0, smin_0, vmin_0]=lower_color
+    [hmax_0, smax_0, vmax_0]=upper_color
 
     [hmin_1, smin_1, vmin_1]=lower_color
     [hmax_1, smax_1, vmax_1]=upper_color
@@ -354,29 +416,35 @@ if __name__ == '__main__':
     #R0 = np.linalg.inv(np.array([[-0.6403, -0.6730, -1.4113], 
      #                            [-0.5477, -0.5929, -1.4882], 
       #                           [-0.4374, -0.4086 , -1.4703]]))
-    r1 = np.array([-0.06858176, 1.389907, 2.78486924])
+    r0 = np.array([-0.06858176, 1.389907, 2.78486924])
+    r1 = np.array([-0.02972071, 0.48175457, 3.08257579])
 
+    R0, _ = cv2.Rodrigues(r0)
     R1, _ = cv2.Rodrigues(r1)
     
-    T1 = np.array([6.27299391, 4.01877434, 24.29342169])
+    T0 = np.array([6.27299391, 4.01877434, 24.29342169])
+    T1 = np.array([2.15020573, 17.54851896, 30.14949137])
 
     # Translation Matrix between each cam & World Coord
     # Focal length of each cam
 
-    cam1_f = np.array([419.4296, 384.6875])
+    cam0_f = np.array([419.4296, 384.6875])
+    cam1_f = np.array([745.99261893, 748.10811003])
 
     # Principle Point of each cam
 
-    cam1_c = np.array([647.8114, 358.0928])
+    cam0_c = np.array([647.8114, 358.0928])
+    cam1_c = np.array([625.02714628, 315.57402011])
 
     # Intrinsics Matrix
 
-    cam1_int = np.array([[814.49848129, 0., 568.49302368], [0., 805.90235641, 369.59529032], [0., 0., 1.]])
-
+    cam0_int = np.array([[814.49848129, 0., 568.49302368], [0., 805.90235641, 369.59529032], [0., 0., 1.]])
+    cam1_int = np.array([[745.99261893, 0.,  625.02714628], [0., 748.10811003, 315.57402011], [0., 0., 1.]])
     mtx1 = cam1_int
     
     #hstack: 가로로 두 array 붙이는 연산
-    dist1 = np.array([0.3166118, -0.49218699, -0.0046719, -0.03840587, 0.25442361])
+    dist0 = np.array([0.3166118, -0.49218699, -0.0046719, -0.03840587, 0.25442361])
+    dist1 = np.array([1.52562640e-01, -4.31254941e-01, -4.27185613e-02,  2.25366445e-04, -2.04619580e-01])
 
     print('intrinsics Matrix')
     print("")
@@ -399,6 +467,7 @@ if __name__ == '__main__':
 
     print(P1)
 
+    
     mapx1, mapy1 = cv2.initUndistortRectifyMap(mtx1, dist1, None, newcameraMtx1, (w, h), 5)
     
 
@@ -407,12 +476,16 @@ if __name__ == '__main__':
     # p1 = Process(target=vision_set())
     # p2 = Process(target=predict())
 
-    cap1 = cv2.VideoCapture(cv2.CAP_DSHOW + 0)
+    cap0 = cv2.VideoCapture(cv2.CAP_DSHOW + 0)
+    cap1 = cv2.VideoCapture(cv2.CAP_DSHOW + 1)
 
+    cap0.isOpened()
     cap1.isOpened()
 
     # Camera0_Setting
 
+    cap0.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+    cap0.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
     cap1.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
     cap1.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
@@ -445,8 +518,6 @@ if __name__ == '__main__':
     tm = cv2.TickMeter()
     
     # the standard for printing current state
-    print_std=0
-    print_now=1
     cnt = 2
     pcnt = 0
 
@@ -454,7 +525,7 @@ if __name__ == '__main__':
 
         tm.reset()
         tm.start()
-        vision_set(print_std)
+        vision_set()
 
         if cv2.waitKey(1) & 0xFF == ord('r'):
             reset_params()
@@ -472,14 +543,14 @@ if __name__ == '__main__':
 
         predict()
 
-        if print_std%print_now==0:
-            print("centerX: ", centerX)
-            print("centerY: ", centerY)
+        
+        sparsePrint("centerX: ", centerX)
+        sparsePrint("centerY: ", centerY)
 
-        if print_std%print_now==0:
-            print("impact: ", impact)
+    
+        sparsePrint("impact: ", impact)
 
-        print("cnt : ", cnt)
+        sparsePrint("cnt : ", cnt)
         
 
 
@@ -487,11 +558,10 @@ if __name__ == '__main__':
         #     print("temp_0: (ignored)", temp_0)
 
         tm.stop()
-        if print_std%print_now==0:
-            print('Calc time : {}ms.'.format(tm.getTimeMilli()))
-            print_std=0
+        
+        sparsePrint('Calc time : {}ms.'.format(tm.getTimeMilli()))
+         
 
-        print_std+=1
 
     cv2.destroyAllWindows()
     cap1.release()
