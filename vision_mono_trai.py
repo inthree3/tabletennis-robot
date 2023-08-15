@@ -168,7 +168,7 @@ def predict(tm):
         time.sleep(0.03)
         #impact, degree
         udp_socket.sendto(data.encode(), (ip_address, 3333)) 
-        
+        time.sleep(1)
         #set deg to zero (set to initial)
         udp_socket.sendto(deg_0.encode(), (ip_address, 3333))
         
