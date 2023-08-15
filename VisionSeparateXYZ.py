@@ -148,7 +148,6 @@ def predict():
     global x_p
     global j
     global impact
-    global pcnt
     global X, Z, v_x, t
     global speed_tm
 
@@ -229,7 +228,7 @@ def predict():
 
 
 
-    if impact==1 and cnt > 0 and ball_array[1][1]-ball_array[0][1]<0:
+    if impact==1 and impact_std==True and ball_array[1][1]-ball_array[0][1]<0:
         print("impact detection succeeded")
         print("slope: ", slope)
         print("center_x", centerX)
@@ -249,6 +248,7 @@ def predict():
         
         #set deg to zero (set to initial)
         udp_socket.sendto(deg_0.encode(), (ip_address, 3333))
+        impact_std=False
         
     print("result z_p: ", Z)
     print("z_array: ", z_array)
@@ -299,7 +299,7 @@ def predict():
     #data = str(x_p) #1000 부분을 조절해서, y를 맞춰야함
     # data=str(0) #fix well for good clear x_p
 
-    #if impact == 1 and cnt > 0:
+    #if impact == 1 and impact_std > 0:
      #   udp_socket.sendto(data.encode(), (ip_address, 9999))
 
      #  udp_socket.sendto(str(impact).encode(), (ip_address, 3333))  # 강민석이 단거임
@@ -361,7 +361,7 @@ if __name__ == '__main__':
 
     global impact
     global centerX, centerY
-    global cnt, pcnt
+    global impact_std
 
     #set initial color range
     lower_color = [0, 87, 89]
@@ -384,8 +384,7 @@ if __name__ == '__main__':
     ball_array = [[0,0],[0,0]]
     z_array = [[0,0],[0,0]]
     impact=0
-    pcnt = 0
-    cnt = 2
+    impact_std = 2
     Z=0
     X=0
 
@@ -530,8 +529,8 @@ if __name__ == '__main__':
     tm = cv2.TickMeter()
     
     # the standard for printing current state
-    cnt = 2
-    pcnt = 0
+    impact_std = True
+
 
     while True:
 
@@ -549,10 +548,9 @@ if __name__ == '__main__':
 
         if ball_cam0[1] < 150 and [ball_cam0[0], ball_cam0[1]]!=[0,0]: #maybe std at which the robot should impact
             impact = 1
-            cnt = cnt - 1
         else :
             impact = 0
-            cnt = 2
+            impact_std = True
 
         predict()
 
@@ -563,7 +561,7 @@ if __name__ == '__main__':
     
         sparsePrint("impact: ", impact)
 
-        sparsePrint("cnt : ", cnt)
+        sparsePrint("impact_std : ", impact_std)
         
 
 
