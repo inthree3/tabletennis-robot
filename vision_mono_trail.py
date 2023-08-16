@@ -123,7 +123,7 @@ def predict(tm):
 
     #while ball_array[1][1] - ball_array[0][1] > 0 :
 
-    if ball_array[0][0]!=centerX and ball_array[0][1]!=centerY:
+    if ball_array[0][0]!=centerX and ball_array[0][1]!=centerY and centerY > 150:
         ball_array.append([centerX, centerY])
         ball_array.pop(0)
 
@@ -150,7 +150,7 @@ def predict(tm):
     j=0
     x_p = (slope * (-230 - ball_array[1][1])  + ball_array[1][0] - 580) * 0.35
 
-    deg_send = x_p*(30/55)
+    deg_send = x_p*(20/55)
     deg_0 =f"{0}SE{0}"
     data= f"{1}SE{deg_send}"
     print("deg_send : ", deg_send)
