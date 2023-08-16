@@ -123,7 +123,7 @@ def predict(tm):
 
     #while ball_array[1][1] - ball_array[0][1] > 0 :
 
-    if ball_array[0][0]!=centerX and ball_array[0][1]!=centerY:
+    if ball_array[0][0]!=centerX and ball_array[0][1]!=centerY and centerY > 150:
         ball_array.append([centerX, centerY])
         ball_array.pop(0)
 

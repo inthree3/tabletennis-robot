@@ -152,7 +152,7 @@ def predict():
     global impact, impact_z
     global X, Z, v_x, t
     global speed_tm
-    #global cnt, cntz
+    global cnt, cntz
 
     # the condition at which the ball is going over the net (temp_0==1)
     # print("temp_0 : ", temp_0)
@@ -221,7 +221,7 @@ def predict():
         speed_tm.reset()
         speed_tm.start()
 
-    if impact == 1 and cnt > 0 and ball_array[1][1]-ball_array[0][1]<0:
+    if impact == 1 and cnt > 0 and ball_array[1][1] < ball_array[0][1]:
         print("impact detection succeeded")
         print("slope: ", slope)
         print("center_x", centerX)
@@ -538,6 +538,8 @@ if __name__ == '__main__':
     tm = cv2.TickMeter()
 
     # the standard for printing current state
+    cnt = 2
+    cntz = 2
     cnt = 2
     cntz = 2
 
