@@ -9,10 +9,13 @@ import math
 def nothing(x):
     pass
 
-#check for 2D matrix
-def checkPoints(event, x, y, flags, param) :
-    if event == cv2.EVENT_LBUTTONDOWN :
+# check for 2D matrix
+
+
+def checkPoints(event, x, y, flags, param):
+    if event == cv2.EVENT_LBUTTONDOWN:
         print(f'current point of {param} (x, y) : ', x, y)
+
 
 def vision_set():
     # while True:
@@ -40,8 +43,8 @@ def vision_set():
     cv2.imshow('src_0', src_0)
     cv2.imshow('src_1', src_1)
 
-    #show current 3D points through mouse click
-    # cv2.imshow('current_point0', src_0) 
+    # show current 3D points through mouse click
+    # cv2.imshow('current_point0', src_0)
     # cv2.imshow('current_point1', src_1)
 
     # cv2.setMouseCallback('current_point0', print_3D, 0)
@@ -52,9 +55,8 @@ def vision_set():
 
     src_hsv_0 = cv2.cvtColor(src_0, cv2.COLOR_BGR2HSV)
     src_hsv_1 = cv2.cvtColor(src_1, cv2.COLOR_BGR2HSV)
-    
-    # cv2.setMouseCallback('src_0', checkPoints)
 
+    # cv2.setMouseCallback('src_0', checkPoints)
 
     # Detecting Color Setting
     # dst_1 = cv2.inRange(src_hsv_1, (hmin_1, smin_1, vmin_1), (hmax_1, smax_1, vmax_1))
@@ -70,14 +72,18 @@ def vision_set():
     mask1 = cv2.morphologyEx(mask1, cv2.MORPH_CLOSE, kernel)
 
     # 마스크 이미지로 원본 이미지에서 범위값에 해당되는 영상 부분을 획득
-    dst_0 = cv2.inRange(src_hsv_0, (hmin_0, smin_0, vmin_0), (hmax_0, smax_0, vmax_0))
-    dst_1 = cv2.inRange(src_hsv_1, (hmin_1, smin_1, vmin_1), (hmax_1, smax_1, vmax_1))
-    
+    dst_0 = cv2.inRange(src_hsv_0, (hmin_0, smin_0, vmin_0),
+                        (hmax_0, smax_0, vmax_0))
+    dst_1 = cv2.inRange(src_hsv_1, (hmin_1, smin_1, vmin_1),
+                        (hmax_1, smax_1, vmax_1))
+
     img_result_0 = cv2.bitwise_and(src_0, src_0, mask=dst_0)
     img_result_1 = cv2.bitwise_and(src_1, src_1, mask=dst_1)
 
-    numOfLabels_0, img_label_0, stats_0, centroids_0 = cv2.connectedComponentsWithStats(dst_0)
-    numOfLabels_1, img_label_1, stats_1, centroids_1 = cv2.connectedComponentsWithStats(dst_1)
+    numOfLabels_0, img_label_0, stats_0, centroids_0 = cv2.connectedComponentsWithStats(
+        dst_0)
+    numOfLabels_1, img_label_1, stats_1, centroids_1 = cv2.connectedComponentsWithStats(
+        dst_1)
 
     # centroids==무게중심 좌표(x,y)
 
@@ -99,8 +105,6 @@ def vision_set():
             cv2.rectangle(src_0, (x, y), (x + width, y + height), (0, 0, 255))
             ball_cam0 = np.array([centroid[0], centroid[1]], dtype=float)
 
-
-
     for idx, centroid in enumerate(centroids_1):
 
         if stats_1[idx][0] == 0 and stats_1[idx][1] == 0:
@@ -114,10 +118,10 @@ def vision_set():
 
         if 100 < area < 1000:
             # 일정 범위 이상 & 이하인 부분에 대해서만 centroids 값 반환
-            cv2.circle(src_1, (int(centerX), int(centerY)), 10, (0, 0, 255), 10)
+            cv2.circle(src_1, (int(centerX), int(centerY)),
+                       10, (0, 0, 255), 10)
             cv2.rectangle(src_1, (x, y), (x + width, y + height), (0, 0, 255))
             ball_cam1 = np.array([centroid[0], centroid[1]], dtype=float)
-
 
     # Display
 
@@ -129,13 +133,11 @@ def vision_set():
     # cv2.imshow('dst_1', dst_1)
     # cv2.imshow('img_result_1', img_result_1)
 
-    speed_tm=cv2.TickMeter()
-#   
+    speed_tm = cv2.TickMeter()
+#
     # sparsePrint('')
     # sparsePrint('-----------------------------------------')
     # sparsePrint(ball_cam1)
-    
-
 
 
 def predict():
@@ -144,7 +146,7 @@ def predict():
     global ball_cam1, ball_cam0
     global centerX, centerY
     global temp_0
-    global slope, slope_z, deg_send #only 'slope' is used
+    global slope, slope_z, deg_send  # only 'slope' is used
     global x_p
     global j
     global impact, impact_z
@@ -152,26 +154,24 @@ def predict():
     global speed_tm
     global impact_std, impactz_std
 
-   
-
-    #the condition at which the ball is going over the net (temp_0==1)
+    # the condition at which the ball is going over the net (temp_0==1)
     # print("temp_0 : ", temp_0)
 
-    
     # if temp_0 == 1 and centerY > 200:
     # ball_array [0,0],[0,0] --> ball_array[0]: temp_point, ball_array[1]: curr_point
 
-    if ball_array[0][0]!=ball_cam0[0] and ball_array[0][1]!=ball_cam0[1] and ball_cam0[0]!=0 and ball_cam0[1]!=0:
+    if ball_array[0][0] != ball_cam0[0] and ball_array[0][1] != ball_cam0[1] and ball_cam0[0] != 0 and ball_cam0[1] != 0:
         ball_array.append([ball_cam0[0], ball_cam0[1]])
         ball_array.pop(0)
-            
-    if ball_array[1][1] - 647 !=0:
+
+    if ball_array[1][1] - 647 != 0:
         # print("center_x", centerX)
         # print("center_y", centerY)
         # print("ball_array_x", ball_array[1][0])
         # print("ball_array_y", ball_array[1][1])
-        if ball_array[1][1] - ball_array[0][1]!=0:
-            slope = (ball_array[1][0] - ball_array[0][0]) / (ball_array[1][1] - ball_array[0][1])
+        if ball_array[1][1] - ball_array[0][1] != 0:
+            slope = (ball_array[1][0] - ball_array[0][0]) / \
+                (ball_array[1][1] - ball_array[0][1])
         else:
             print("denominator is zero")
         # deg_send = math.degrees(math.atan(-slope))
@@ -179,51 +179,48 @@ def predict():
         # data= f"{1},{deg_send}"
         # print("deg_send : ", deg_send)
     else:
-        slope=0
+        slope = 0
 
-    
     # x_p = slope * 24 + 0
-    j=0
-    x_p = (slope * (-230 - ball_array[1][1])  + ball_array[1][0] - 580) * 0.35
+    j = 0
+    x_p = (slope * (-230 - ball_array[1][1]) + ball_array[1][0] - 580) * 0.35
 
-    #slope redefine based on x_p
+    # slope redefine based on x_p
     deg_send = x_p*(20/55)
-    deg_0 =f"{0},{0}"
-    data= f"{1},{deg_send}"
+    deg_0 = f"{0},{0}"
+    data = f"{1},{deg_send}"
     print("deg_send : ", deg_send)
 
+    # z 좌표 범위 지정
 
+    if ball_cam1[0] == 0 and ball_cam1[0] == 0:
+        z_array = []
 
-    #z 좌표 범위 지정
-    
-    if ball_cam1[0]==0 and ball_cam1[0]==0:
-        z_array=[]
-
-    if (ball_cam1[0]!=0 and ball_cam1[1]!=0) and (-len(z_array)==0 or (len(z_array)==1 and z_array[0][0] != ball_cam1[0] and z_array[0][1]!=ball_cam1[1])):
-        if speed_tm.getAvgTimeMilli()>0:
+    if (ball_cam1[0] != 0 and ball_cam1[1] != 0) and (-len(z_array) == 0 or (len(z_array) == 1 and z_array[0][0] != ball_cam1[0] and z_array[0][1] != ball_cam1[1])):
+        if speed_tm.getAvgTimeMilli() > 0:
             speed_tm.stop()
-        
-        tm_diff=speed_tm.getTimeMilli()
+
+        tm_diff = speed_tm.getTimeMilli()
 
         z_array.append([ball_cam1[0], ball_cam1[1]])
-        if len(z_array)==2 and z_array[1][1] - z_array[0][1] > 0:
+        if len(z_array) == 2 and z_array[1][1] - z_array[0][1] > 0:
             z_array.pop(0)
 
-        if len(z_array)==2 and z_array[1][1] - z_array[0][1] < 0:
+        if len(z_array) == 2 and z_array[1][1] - z_array[0][1] < 0:
             X = 970 - z_array[0][0]
-            if tm_diff!=0:
+            if tm_diff != 0:
                 v_x = (z_array[1][0] - z_array[0][0]) / tm_diff
                 t = X / v_x
-                Z = (X*(z_array[1][1] - z_array[0][1]) / (z_array[1][0] - z_array[0][0])) - (9.8*(X**2) / 2*((v_x)**2))
+                Z = (X*(z_array[1][1] - z_array[0][1]) / (z_array[1]
+                     [0] - z_array[0][0])) - (9.8*(X**2) / 2*((v_x)**2))
                 print("v_x: ", v_x)
                 print("t: ", t)
                 print("Z: ", Z)
 
         speed_tm.reset()
         speed_tm.start()
-        
 
-    if impact==1 and impact_std==True and ball_array[1][1] < ball_array[0][1]:
+    if impact == 1 and impact_std == True and ball_array[1][1] < ball_array[0][1]:
         print("impact detection succeeded")
         print("slope: ", slope)
         print("center_x", centerX)
@@ -232,31 +229,31 @@ def predict():
         print("ball_array_y1", ball_array[0][1])
         print("ball_array_x2", ball_array[1][0])
         print("ball_array_y2", ball_array[1][1])
-        print("current x" , ball_array[1][0])
+        print("current x", ball_array[1][0])
         print("result x_p: ", x_p)
-        
-        #predicted x position
+
+        # predicted x position
         udp_socket.sendto(str(x_p).encode(), (ip_address, 9999))
 
-        impact_std=False
+        impact_std = False
 
-    if impact_z==1 and impactz_std==True and len(z_array) ==2 and z_array[1][0] > z_array[0][0]:
+    if impact_z == 1 and impactz_std == True and len(z_array) == 2 and z_array[1][0] > z_array[0][0]:
         print("impact_z detection succeeded")
+        print("impact z: ", impact_z)
 
-        #impact, degree
-        udp_socket.sendto(data.encode(), (ip_address, 3333)) 
+        # impact, degree
+        udp_socket.sendto(data.encode(), (ip_address, 3333))
         time.sleep(1)
 
-        #set deg to zero (set to initial)
+        # set deg to zero (set to initial)
         udp_socket.sendto(deg_0.encode(), (ip_address, 3333))
 
-        impactz_std=False
+        impactz_std = False
 
-        
     print("result z_p: ", Z)
     print("z_array: ", z_array)
     print("X: ", X)
-    
+
 # ---------------------------------------------------y_p calc-----------------------------------------------------------
 
     if x_p > 55:
@@ -292,17 +289,16 @@ def predict():
 
 # -----------------------------------------------------print------------------------------------------------------------
 
- 
     # print('predict_result')
-    # print("x_p :",x_p) 
+    # print("x_p :",x_p)
     # print(slope)
     # print((5000+int(-y_p))*10000+step*1000+0)
 
 # ---------------------------------------------------Data Send----------------------------------------------------------
-    #data = str(x_p) #1000 부분을 조절해서, y를 맞춰야함
+    # data = str(x_p) #1000 부분을 조절해서, y를 맞춰야함
     # data=str(0) #fix well for good clear x_p
 
-    #if impact == 1 and impact_std > 0:
+    # if impact == 1 and impact_std > 0:
      #   udp_socket.sendto(data.encode(), (ip_address, 9999))
 
      #  udp_socket.sendto(str(impact).encode(), (ip_address, 3333))  # 강민석이 단거임
@@ -310,20 +306,20 @@ def predict():
  #       udp_socket.sendto(str(0).encode(), (ip_address, 3333))
 
 
-
 # elif temp_0 == 1 and ball_3D[1] > 11.5:
 #     temp_0 = 0
 
-#print the text sparsely so that research can read the log simultaneously.
+# print the text sparsely so that research can read the log simultaneously.
 def sparsePrint(*texts):
-    print_std=20
-    
-    if print_std%10==0:
+    print_std = 20
+
+    if print_std % 10 == 0:
         for text in texts:
             print(text, end="")
-        print_std=0
+        print_std = 0
 
-    print_std+=1
+    print_std += 1
+
 
 def reset_params():
     global curr_p, prev_p
@@ -338,8 +334,8 @@ def reset_params():
     temp_0 = 1
     slope = 0
     slope_temp = 0
-    curr_p=[0,0]
-    prev_p=[0,0]
+    curr_p = [0, 0]
+    prev_p = [0, 0]
     data_reset = str(0)
     udp_socket.sendto(data_reset.encode(), (ip_address, 9999))
     print('reset!')
@@ -351,7 +347,7 @@ if __name__ == '__main__':
 
 # -----------------------------------------------초기값 UDP Send---------------------------------------------------------
 
-    ip_address="172.17.27.22"
+    ip_address = "172.17.27.22"
     data_zero = str(0)
     udp_socket.sendto(data_zero.encode(), (ip_address, 9999))
     data_impact = str(0)
@@ -366,48 +362,45 @@ if __name__ == '__main__':
     global centerX, centerY
     global impact_std
 
-    #set initial color range
+    # set initial color range
     lower_color = [0, 87, 89]
     upper_color = [63, 255, 200]
 
+    [hmin_0, smin_0, vmin_0] = lower_color
+    [hmax_0, smax_0, vmax_0] = upper_color
 
-    [hmin_0, smin_0, vmin_0]=lower_color
-    [hmax_0, smax_0, vmax_0]=upper_color
-
-    [hmin_1, smin_1, vmin_1]=lower_color
-    [hmax_1, smax_1, vmax_1]=upper_color
-
+    [hmin_1, smin_1, vmin_1] = lower_color
+    [hmax_1, smax_1, vmax_1] = upper_color
 
     temp_0 = 1
     y_p = 0
     slope = 0
     slope_temp = 0
-    centerY=480
-    centerX=760
-    ball_array = [[0,0],[0,0]]
-    z_array = [[0,0],[0,0]]
-    impact=0
-    impact_z=0
+    centerY = 480
+    centerX = 760
+    ball_array = [[0, 0], [0, 0]]
+    z_array = [[0, 0], [0, 0]]
+    impact = 0
+    impact_z = 0
     impact_std = True
     impactz_std = True
-    Z=0
-    X=0
-
+    Z = 0
+    X = 0
 
     i_main = 0
     h, w = np.array([720, 1280])
 
     # Set Camera Matrix
 
-    #R0 = np.linalg.inv(np.array([[-0.6403, -0.6730, -1.4113], 
-     #                            [-0.5477, -0.5929, -1.4882], 
-      #                           [-0.4374, -0.4086 , -1.4703]]))
+    # R0 = np.linalg.inv(np.array([[-0.6403, -0.6730, -1.4113],
+    #                            [-0.5477, -0.5929, -1.4882],
+    #                           [-0.4374, -0.4086 , -1.4703]]))
     r0 = np.array([-0.06858176, 1.389907, 2.78486924])
     r1 = np.array([-0.02972071, 0.48175457, 3.08257579])
 
     R0, _ = cv2.Rodrigues(r0)
     R1, _ = cv2.Rodrigues(r1)
-    
+
     T0 = np.array([6.27299391, 4.01877434, 24.29342169])
     T1 = np.array([2.15020573, 17.54851896, 30.14949137])
 
@@ -424,15 +417,19 @@ if __name__ == '__main__':
 
     # Intrinsics Matrix
 
-    cam0_int = np.array([[814.49848129, 0., 568.49302368], [0., 805.90235641, 369.59529032], [0., 0., 1.]])
-    cam1_int = np.array([[745.99261893, 0.,  625.02714628], [0., 748.10811003, 315.57402011], [0., 0., 1.]])
-    
+    cam0_int = np.array([[814.49848129, 0., 568.49302368], [
+                        0., 805.90235641, 369.59529032], [0., 0., 1.]])
+    cam1_int = np.array([[745.99261893, 0.,  625.02714628], [
+                        0., 748.10811003, 315.57402011], [0., 0., 1.]])
+
     mtx0 = cam0_int
     mtx1 = cam1_int
 
-    #hstack: 가로로 두 array 붙이는 연산
-    dist0 = np.array([0.3166118, -0.49218699, -0.0046719, -0.03840587, 0.25442361])
-    dist1 = np.array([1.52562640e-01, -4.31254941e-01, -4.27185613e-02,  2.25366445e-04, -2.04619580e-01])
+    # hstack: 가로로 두 array 붙이는 연산
+    dist0 = np.array(
+        [0.3166118, -0.49218699, -0.0046719, -0.03840587, 0.25442361])
+    dist1 = np.array([1.52562640e-01, -4.31254941e-01, -
+                     4.27185613e-02,  2.25366445e-04, -2.04619580e-01])
 
     print('intrinsics Matrix')
     print('')
@@ -444,10 +441,12 @@ if __name__ == '__main__':
 
     # Calibration for new camera matrix
 
-    newcameraMtx0, roi0 = cv2.getOptimalNewCameraMatrix(cam0_int, dist0, (w, h), 1, (w, h))
+    newcameraMtx0, roi0 = cv2.getOptimalNewCameraMatrix(
+        cam0_int, dist0, (w, h), 1, (w, h))
     print(newcameraMtx0)
     print("")
-    newcameraMtx1, roi1 = cv2.getOptimalNewCameraMatrix(cam1_int, dist1, (w, h), 1, (w, h))
+    newcameraMtx1, roi1 = cv2.getOptimalNewCameraMatrix(
+        cam1_int, dist1, (w, h), 1, (w, h))
     print(newcameraMtx1)
 
     print(roi0)
@@ -470,9 +469,10 @@ if __name__ == '__main__':
     print(P0)
     print(P1)
 
-    
-    mapx0, mapy0 = cv2.initUndistortRectifyMap(mtx0, dist0, None, newcameraMtx0, (w, h), 5)
-    mapx1, mapy1 = cv2.initUndistortRectifyMap(mtx1, dist1, None, newcameraMtx1, (w, h), 5) 
+    mapx0, mapy0 = cv2.initUndistortRectifyMap(
+        mtx0, dist0, None, newcameraMtx0, (w, h), 5)
+    mapx1, mapy1 = cv2.initUndistortRectifyMap(
+        mtx1, dist1, None, newcameraMtx1, (w, h), 5)
 
     # CAP_DSHOW 가 그냥 Index Calling에 비해 속도 훨씬 빠름
 
@@ -488,7 +488,7 @@ if __name__ == '__main__':
     # Camera0_Setting
     cap0.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
     cap0.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-    
+
     cap0.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
     cap0.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
     cap0.set(cv2.CAP_PROP_FRAME_COUNT, 60)
@@ -529,13 +529,11 @@ if __name__ == '__main__':
     # cv2.namedWindow('dst_0') #dst_0 is the mask(gray scale) of the ball
     # cv2.namedWindow('dst_1')
 
-
     # 연산 시간 측정
     tm = cv2.TickMeter()
-    
+
     # the standard for printing current state
     impact_std = True
-
 
     while True:
 
@@ -550,14 +548,14 @@ if __name__ == '__main__':
             print('break!')
             break
 
-
-        if ball_cam0[1] < 300 and [ball_cam0[0], ball_cam0[1]]!=[0,0]: #maybe std at which the robot should impact
+        # maybe std at which the robot should impact
+        if ball_cam0[1] < 300 and [ball_cam0[0], ball_cam0[1]] != [0, 0]:
             impact = 1
-        else :
+        else:
             impact = 0
             impact_std = True
 
-        if ball_cam1[0] > 50 and [ball_cam1[0], ball_cam1[1]]!=[0,0]:
+        if ball_cam1[0] > 50 and [ball_cam1[0], ball_cam1[1]] != [0, 0]:
             impact_z = 1
         else:
             impact_z = 0
@@ -565,25 +563,19 @@ if __name__ == '__main__':
 
         predict()
 
-        
         sparsePrint("centerX: ", centerX)
         sparsePrint("centerY: ", centerY)
 
-    
         sparsePrint("impact: ", impact)
 
         sparsePrint("impact_std : ", impact_std)
-        
-
 
         # if print_std%print_now==0:
         #     print("temp_0: (ignored)", temp_0)
 
         tm.stop()
-        
-        sparsePrint('Calc time : {}ms.'.format(tm.getTimeMilli()))
-         
 
+        sparsePrint('Calc time : {}ms.'.format(tm.getTimeMilli()))
 
     cv2.destroyAllWindows()
     cap1.release()
