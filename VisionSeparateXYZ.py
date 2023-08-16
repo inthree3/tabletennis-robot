@@ -152,7 +152,7 @@ def predict():
     global impact, impact_z
     global X, Z, v_x, t
     global speed_tm
-    global impact_std, impactz_std
+    #global cnt, cntz
 
     # the condition at which the ball is going over the net (temp_0==1)
     # print("temp_0 : ", temp_0)
@@ -160,7 +160,7 @@ def predict():
     # if temp_0 == 1 and centerY > 200:
     # ball_array [0,0],[0,0] --> ball_array[0]: temp_point, ball_array[1]: curr_point
 
-    if ball_array[0][0] != ball_cam0[0] and ball_array[0][1] != ball_cam0[1] and ball_cam0[0] != 0 and ball_cam0[1] != 0:
+    if ball_array[0][0] != ball_cam0[0] and ball_array[0][1] != ball_cam0[1] and ball_cam0[0] != 0 and ball_cam0[1] != 0 and ball_cam0[1] > 200:
         ball_array.append([ball_cam0[0], ball_cam0[1]])
         ball_array.pop(0)
 
@@ -173,7 +173,8 @@ def predict():
             slope = (ball_array[1][0] - ball_array[0][0]) / \
                 (ball_array[1][1] - ball_array[0][1])
         else:
-            print("denominator is zero")
+            pass
+            # sparsePrint("denominator is zero")
         # deg_send = math.degrees(math.atan(-slope))
         # deg_0 =f"{0},{0}"
         # data= f"{1},{deg_send}"
@@ -187,9 +188,9 @@ def predict():
 
     # slope redefine based on x_p
     deg_send = x_p*(20/55)
-    deg_0 = f"{0},{0}"
-    data = f"{1},{deg_send}"
-    print("deg_send : ", deg_send)
+    deg_0 = f"{0}SE{0}"
+    data = f"{1}SE{deg_send}"
+    sparsePrint("deg_send : ", deg_send)
 
     # z 좌표 범위 지정
 
@@ -220,7 +221,7 @@ def predict():
         speed_tm.reset()
         speed_tm.start()
 
-    if impact == 1 and impact_std == True and ball_array[1][1] < ball_array[0][1]:
+    if impact == 1 and cnt > 0 and ball_array[1][1]-ball_array[0][1]<0:
         print("impact detection succeeded")
         print("slope: ", slope)
         print("center_x", centerX)
@@ -234,25 +235,24 @@ def predict():
 
         # predicted x position
         udp_socket.sendto(str(x_p).encode(), (ip_address, 9999))
+    
 
-        impact_std = False
-
-    if impact_z == 1 and impactz_std == True and len(z_array) == 2 and z_array[1][0] > z_array[0][0]:
+    if impact_z == 1 and cntz > 0 and len(z_array) == 2 and z_array[1][0] > z_array[0][0]:
         print("impact_z detection succeeded")
         print("impact z: ", impact_z)
 
         # impact, degree
         udp_socket.sendto(data.encode(), (ip_address, 3333))
-        time.sleep(1)
+        time.sleep(0.8)
 
         # set deg to zero (set to initial)
         udp_socket.sendto(deg_0.encode(), (ip_address, 3333))
 
-        impactz_std = False
 
-    print("result z_p: ", Z)
-    print("z_array: ", z_array)
-    print("X: ", X)
+
+    sparsePrint("result z_p: ", Z)
+    sparsePrint("z_array: ", z_array)
+    sparsePrint("X: ", X)
 
 # ---------------------------------------------------y_p calc-----------------------------------------------------------
 
@@ -311,14 +311,16 @@ def predict():
 
 # print the text sparsely so that research can read the log simultaneously.
 def sparsePrint(*texts):
-    print_std = 20
+    global print_std
 
     if print_std % 10 == 0:
         for text in texts:
             print(text, end="")
         print_std = 0
+        print()
 
     print_std += 1
+        
 
 
 def reset_params():
@@ -358,9 +360,10 @@ if __name__ == '__main__':
     global hmin_0, hmax_0, smin_0, smax_0, vmin_0, vmax_0
     global hmin_1, hmax_1, smin_1, smax_1, vmin_1, vmax_1
 
-    global impact
+    global impact, impact_z
     global centerX, centerY
-    global impact_std
+    global cnt, cntz
+    global print_std
 
     # set initial color range
     lower_color = [0, 87, 89]
@@ -382,10 +385,12 @@ if __name__ == '__main__':
     z_array = [[0, 0], [0, 0]]
     impact = 0
     impact_z = 0
-    impact_std = True
+    cnt = 2
+    cntz = 2
     impactz_std = True
     Z = 0
     X = 0
+    print_std=0
 
     i_main = 0
     h, w = np.array([720, 1280])
@@ -533,7 +538,8 @@ if __name__ == '__main__':
     tm = cv2.TickMeter()
 
     # the standard for printing current state
-    impact_std = True
+    cnt = 2
+    cntz = 2
 
     while True:
 
@@ -551,24 +557,29 @@ if __name__ == '__main__':
         # maybe std at which the robot should impact
         if ball_cam0[1] < 300 and [ball_cam0[0], ball_cam0[1]] != [0, 0]:
             impact = 1
+            cnt = cnt - 1
         else:
             impact = 0
-            impact_std = True
+            cnt = 2
 
         if ball_cam1[0] > 50 and [ball_cam1[0], ball_cam1[1]] != [0, 0]:
             impact_z = 1
+            cntz = cntz - 1
         else:
             impact_z = 0
-            impactz_std = True
+            cntz = 2
+    
 
         predict()
+
+        sparsePrint("impact : ", impact)
+        sparsePrint("impact_z : ", impact_z)
+        sparsePrint("cnt : ", cnt)
+        sparsePrint("cntz : ", cntz)
 
         sparsePrint("centerX: ", centerX)
         sparsePrint("centerY: ", centerY)
 
-        sparsePrint("impact: ", impact)
-
-        sparsePrint("impact_std : ", impact_std)
 
         # if print_std%print_now==0:
         #     print("temp_0: (ignored)", temp_0)
