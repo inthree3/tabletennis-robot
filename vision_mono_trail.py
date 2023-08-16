@@ -150,7 +150,7 @@ def predict(tm):
     j=0
     x_p = (slope * (-230 - ball_array[1][1])  + ball_array[1][0] - 580) * 0.35
 
-    deg_send = x_p*(9/11)
+    deg_send = x_p*(30/55)
     deg_0 =f"{0}SE{0}"
     data= f"{1}SE{deg_send}"
     print("deg_send : ", deg_send)
@@ -170,10 +170,10 @@ def predict(tm):
         print("result x_p: ", x_p)
         #predicted x position
         udp_socket.sendto(str(x_p).encode(), (ip_address, 9999))
-        time.sleep(0.03)
+       # time.sleep(0.03)
         #impact, degree
         udp_socket.sendto(data.encode(), (ip_address, 3333)) 
-        time.sleep(1)
+        time.sleep(0.8)
         #set deg to zero (set to initial)
         udp_socket.sendto(deg_0.encode(), (ip_address, 3333))
         
@@ -425,7 +425,7 @@ if __name__ == '__main__':
             break
 
 
-        if centerY < 150 and [centerX, centerY]!=[0,0]: #maybe std at which the robot should impact
+        if centerY < 300 and [centerX, centerY]!=[0,0]: #maybe std at which the robot should impact
             impact = 1
             cnt = cnt - 1
         else :

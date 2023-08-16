@@ -187,7 +187,7 @@ def predict():
     x_p = (slope * (-230 - ball_array[1][1])  + ball_array[1][0] - 580) * 0.35
 
     #slope redefine based on x_p
-    deg_send = x_p*(5/11)
+    deg_send = x_p*(20/55)
     deg_0 =f"{0},{0}"
     data= f"{1},{deg_send}"
     print("deg_send : ", deg_send)
@@ -551,13 +551,13 @@ if __name__ == '__main__':
             break
 
 
-        if ball_cam0[1] < 150 and [ball_cam0[0], ball_cam0[1]]!=[0,0]: #maybe std at which the robot should impact
+        if ball_cam0[1] < 300 and [ball_cam0[0], ball_cam0[1]]!=[0,0]: #maybe std at which the robot should impact
             impact = 1
         else :
             impact = 0
             impact_std = True
 
-        if ball_cam1[0] > 400 and [ball_cam1[0], ball_cam1[1]]!=[0,0]:
+        if ball_cam1[0] > 50 and [ball_cam1[0], ball_cam1[1]]!=[0,0]:
             impact_z = 1
         else:
             impact_z = 0
