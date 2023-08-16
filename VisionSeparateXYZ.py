@@ -152,7 +152,7 @@ def predict():
     global impact, impact_z
     global X, Z, v_x, t
     global speed_tm
-    global impact_std, impactz_std
+    global cnt, cntz
 
     # the condition at which the ball is going over the net (temp_0==1)
     # print("temp_0 : ", temp_0)
@@ -220,7 +220,7 @@ def predict():
         speed_tm.reset()
         speed_tm.start()
 
-    if impact == 1 and impact_std == True and ball_array[1][1] < ball_array[0][1]:
+    if impact == 1 and cnt > 0 and ball_array[1][1] < ball_array[0][1]:
         print("impact detection succeeded")
         print("slope: ", slope)
         print("center_x", centerX)
@@ -235,9 +235,8 @@ def predict():
         # predicted x position
         udp_socket.sendto(str(x_p).encode(), (ip_address, 9999))
 
-        impact_std = False
 
-    if impact_z == 1 and impactz_std == True and len(z_array) == 2 and z_array[1][0] > z_array[0][0]:
+    if impact_z == 1 and cntz > 0 and len(z_array) == 2 and z_array[1][0] > z_array[0][0]:
         print("impact_z detection succeeded")
         print("impact z: ", impact_z)
 
@@ -248,7 +247,6 @@ def predict():
         # set deg to zero (set to initial)
         udp_socket.sendto(deg_0.encode(), (ip_address, 3333))
 
-        impactz_std = False
 
     print("result z_p: ", Z)
     print("z_array: ", z_array)
@@ -358,9 +356,9 @@ if __name__ == '__main__':
     global hmin_0, hmax_0, smin_0, smax_0, vmin_0, vmax_0
     global hmin_1, hmax_1, smin_1, smax_1, vmin_1, vmax_1
 
-    global impact
+    global impact, impact_z
     global centerX, centerY
-    global impact_std
+    global cnt, cntz
 
     # set initial color range
     lower_color = [0, 87, 89]
@@ -382,8 +380,8 @@ if __name__ == '__main__':
     z_array = [[0, 0], [0, 0]]
     impact = 0
     impact_z = 0
-    impact_std = True
-    impactz_std = True
+    cnt = 2
+    cntz = 2
     Z = 0
     X = 0
 
@@ -533,7 +531,8 @@ if __name__ == '__main__':
     tm = cv2.TickMeter()
 
     # the standard for printing current state
-    impact_std = True
+    cnt = 2
+    cntz = 2
 
     while True:
 
@@ -553,13 +552,13 @@ if __name__ == '__main__':
             impact = 1
         else:
             impact = 0
-            impact_std = True
+            cnt = cnt - 1
 
         if ball_cam1[0] > 50 and [ball_cam1[0], ball_cam1[1]] != [0, 0]:
             impact_z = 1
         else:
             impact_z = 0
-            impactz_std = True
+            cntz = cntz - 1
 
         predict()
 
@@ -568,7 +567,7 @@ if __name__ == '__main__':
 
         sparsePrint("impact: ", impact)
 
-        sparsePrint("impact_std : ", impact_std)
+        sparsePrint("cnt : ", cnt)
 
         # if print_std%print_now==0:
         #     print("temp_0: (ignored)", temp_0)
