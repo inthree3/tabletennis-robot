@@ -78,7 +78,7 @@ def vision_set():
 
         if 100 < area < 5000:
             # 일정 범위 이상 & 이하인 부분에 대해서만 centroids 값 반환 (depends on the camera setting)
-            cv2.circle(src_1, (int(centerX), int(centerY)), 10, (0, 0, 255), 10)
+            # cv2.circle(src_1, (int(centerX), int(centerY)), 10, (0, 0, 255), 10)
             cv2.rectangle(src_1, (x, y), (x + width, y + height), (0, 0, 255))
             ball_cam1 = np.array([centroid[0], centroid[1]], dtype=float)
 
@@ -92,7 +92,7 @@ def vision_set():
 
     cv2.imshow('src_1', src_1)
     # cv2.imshow('dst_1', dst_1)
-    # cv2.imshow('img_result_1', img_result_1)
+    # cv2.imshow('img_result_1',   img_result_1)
 
     
     sparsePrint('')
@@ -123,9 +123,20 @@ def predict(tm):
 
     #while ball_array[1][1] - ball_array[0][1] > 0 :
 
-    if ball_array[0][0]!=centerX and ball_array[0][1]!=centerY and centerY > 150:
-        ball_array.append([centerX, centerY])
+    if ball_array[0][0] != centerX and ball_array[0][1] != centerY and centerY > 150:
+        ball_array.append([centerX,centerY])
         ball_array.pop(0)
+
+    # if ball_array[1]==[0,0] or (ball_array[1]!=[0,0] and ball_array[1][1] > centerY):
+    #     if ball_array[0][0]!=centerX and ball_array[0][1]!=centerY :
+    #         ball_array.append([centerX, centerY])
+    #         if ball_array[0]==[0,0]:
+    #             ball_array.pop(0)
+    #         elif len(ball_array) == 3:
+    #             ball_array.pop(1)
+    # else:
+    #     ball_array = [[0,0],[0,0]]
+
 
     if ball_array[1][1] - 647 !=0:
         # print("center_x", centerX)
@@ -148,15 +159,40 @@ def predict(tm):
 
     # x_p = slope * 24 + 0
     j=0
-    x_p = (slope * (-230 - ball_array[1][1])  + ball_array[1][0] - 580) * 0.35 + 5
-    
-    if x_p:
-        deg_send = min(x_p, 55)*(8/55)
-    elif x_p<0:
-        deg_send = max(x_p, -55)*(8/55)
+    if abs(slope) > 0.03 and abs(slope) < 0.08 :
+        x_p = ((slope/1.2) * (-230 - ball_array[0][1])  + ball_array[0][0] - 600) * 0.2 - 5
+    elif abs(slope) < 0.03:
+        x_p = ((slope/1.2) * (-230 - ball_array[0][1])  + ball_array[0][0] - 600) * 0.25 - 5
+    elif abs(slope) > 0.08 and abs(slope) < 0.1:
+        x_p = ((slope/1.2) * (-230 - ball_array[0][1])  + ball_array[0][0] - 600) * 0.15 - 5
+    elif abs(slope) < 0.2 and abs(slope) > 0.1:
+        x_p = ((slope*1.2) * (-230 - ball_array[0][1])  + ball_array[0][0] - 600) * 0.2 - 5
+    elif abs(slope) < 0.3 and abs(slope) > 0.2:
+        x_p = ((slope*1.2) * (-230 - ball_array[0][1])  + ball_array[0][0] - 600) * 0.3 - 5
+    elif abs(slope) < 0.5 and abs(slope) > 0.3:
+        x_p = ((slope*1.2) * (-230 - ball_array[0][1])  + ball_array[0][0] - 600) * 0.3 - 5
+    else :
+        x_p = ((slope*1.2) * (-230 - ball_array[0][1])  + ball_array[0][0] - 600) * 0.25 - 5
+    print("x_p: ", x_p)
+
+    if x_p>=0 and x_p <= 15:
+        deg_send = 0
+    elif x_p > 15:
+        deg_send = min(x_p, 55)*(15/55)
+    elif x_p<0 and x_p >= -15:
+        deg_send = 0
+    else:
+        deg_send = max(x_p, -55)*(15/55)
     deg_0 =f"{0}SE{0}"
     data= f"{1}SE{deg_send}"
     print("deg_send : ", deg_send)
+
+    print("center_x", centerX)
+    print("center_y", centerY)
+    print("ball_array_x1", ball_array[0][0])
+    print("ball_array_y1", ball_array[0][1])
+    print("ball_array_x2", ball_array[1][0])
+    print("ball_array_y2", ball_array[1][1])
 
     # delay based on the ball's speed for more accurate impact timing
     # time.sleep(speed)
@@ -176,12 +212,18 @@ def predict(tm):
        # time.sleep(0.03)
         #impact, degree
         udp_socket.sendto(data.encode(), (ip_address, 3333)) 
-        time.sleep(0.7)
+        time.sleep(0.6)
         #set deg to zero (set to initial)
         udp_socket.sendto(deg_0.encode(), (ip_address, 3333))
+
+        
+        ball_array =[[0,0],[0,0]]
+
+
+
+
         
        
-
 # ---------------------------------------------------y_p calc-----------------------------------------------------------
 
     if x_p > 55:
@@ -260,7 +302,7 @@ def reset_params():
 
 
     impact = 0
-    ball_array = []
+    ball_array = [[0,0],[0,0]]
     temp_0 = 1
     slope = 0
     slope_temp = 0
@@ -305,8 +347,8 @@ if __name__ == '__main__':
     y_p = 0
     slope = 0
     slope_temp = 0
-    centerY=480
-    centerX=760
+    centerY=0
+    centerX=0
     ball_array = [[0,0],[0,0]]
     impact=0
     pcnt = 0
@@ -338,12 +380,12 @@ if __name__ == '__main__':
 
     # Intrinsics Matrix
 
-    cam1_int = np.array([[814.49848129, 0., 568.49302368], [0., 805.90235641, 369.59529032], [0., 0., 1.]])
+    cam1_int = np.array([[917.90762504, 0., 666.38254799], [0., 925.16342156, 383.26190772], [0., 0., 1.]])
 
     mtx1 = cam1_int
     
     #hstack: 가로로 두 array 붙이는 연산
-    dist1 = np.array([0.3166118, -0.49218699, -0.0046719, -0.03840587, 0.25442361])
+    dist1 = np.array([0.28723829, -0.65396653, 0.00228012, -0.00093557, 0.40185624])
 
     print('intrinsics Matrix')
     print("")
@@ -400,7 +442,7 @@ if __name__ == '__main__':
     # cap1.set(cv2.CAP_PROP_BRIGHTNESS, 500)
     print("the cap1 fps: ", cap1.get(cv2.CAP_PROP_FPS))
 
-    mask1 = cv2.imread('cam0_mask_cali_v2.jpg', cv2.IMREAD_GRAYSCALE)
+    mask1 = cv2.imread('cam1_mask_cali_v2.jpg', cv2.IMREAD_GRAYSCALE)
 
     # cv2.namedWindow('src')
 
@@ -414,7 +456,7 @@ if __name__ == '__main__':
     # the standard for printing current state
     cnt = 2
     pcnt = 0
-
+    
     while True:
 
         tm.reset()
@@ -428,12 +470,13 @@ if __name__ == '__main__':
             break
 
 
-        if centerY < 300 and [centerX, centerY]!=[0,0] and ball_array[1][1]-ball_array[0][1]<0: #maybe std at which the robot should impact
+        if centerY < 150 and [centerX, centerY]!=[0,0] and ball_array[1][1]-ball_array[0][1]<0: #maybe std at which the robot should impact
             impact = 1
             cnt = cnt - 1
         else :
             impact = 0
             cnt = 2
+
 
         #parameter tm is for calculating the speed of the ball
         predict(tm)
