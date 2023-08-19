@@ -18,8 +18,6 @@ def checkPoints(event, x, y, flags, param):
 
 
 def vision_set():
-    # while True:
-
     global mapx0, mapx1, mapy0, mapy1, mask0, mask1, cap0, cap1
     global ball_3D_temp, ball_3D
     global ball_cam0, ball_cam1
@@ -95,12 +93,11 @@ def vision_set():
             continue
 
         x, y, width, height, area = stats_0[idx]
-        centerX, centerY = int(centroid[0]), int(centroid[1])
         # print(centerX, centerY)
 
         if 100 < area < 1000:
             # 일정 범위 이상 & 이하인 부분에 대해서만 centroids 값 반환
-
+            centerX, centerY = int(centroid[0]), int(centroid[1])
             cv2.circle(src_0, (centerX, centerY), 10, (0, 0, 255), 10)
             cv2.rectangle(src_0, (x, y), (x + width, y + height), (0, 0, 255))
             ball_cam0 = np.array([centroid[0], centroid[1]], dtype=float)
@@ -114,17 +111,16 @@ def vision_set():
             continue
 
         x, y, width, height, area = stats_1[idx]
-        centerX, centerY = int(centroid[0]), int(centroid[1])
 
         if 100 < area < 1000:
             # 일정 범위 이상 & 이하인 부분에 대해서만 centroids 값 반환
+            centerX, centerY = int(centroid[0]), int(centroid[1])
             cv2.circle(src_1, (int(centerX), int(centerY)),
                        10, (0, 0, 255), 10)
             cv2.rectangle(src_1, (x, y), (x + width, y + height), (0, 0, 255))
             ball_cam1 = np.array([centroid[0], centroid[1]], dtype=float)
 
     # Display
-
     cv2.imshow('src_0', src_0)
     # cv2.imshow('dst_0', dst_0)
     # cv2.imshow('img_result_0', img_result_0)
@@ -133,7 +129,6 @@ def vision_set():
     # cv2.imshow('dst_1', dst_1)
     # cv2.imshow('img_result_1', img_result_1)
 
-    speed_tm = cv2.TickMeter()
 #
     # sparsePrint('')
     # sparsePrint('-----------------------------------------')
@@ -160,7 +155,7 @@ def predict():
     # if temp_0 == 1 and centerY > 200:
     # ball_array [0,0],[0,0] --> ball_array[0]: temp_point, ball_array[1]: curr_point
 
-    if ball_array[0][0] != ball_cam0[0] and ball_array[0][1] != ball_cam0[1] and ball_cam0[0] != 0 and ball_cam0[1] != 0 and ball_cam0[1] > 200:
+    if ball_array[0][0] != ball_cam0[0] and ball_array[0][1] != ball_cam0[1] and ball_cam0[0] != 0 and ball_cam0[1] != 0 and ball_cam0[1] > 150:
         ball_array.append([ball_cam0[0], ball_cam0[1]])
         ball_array.pop(0)
 
@@ -173,8 +168,7 @@ def predict():
             slope = (ball_array[1][0] - ball_array[0][0]) / \
                 (ball_array[1][1] - ball_array[0][1])
         else:
-            pass
-            # sparsePrint("denominator is zero")
+            print("denominator is zero")
         # deg_send = math.degrees(math.atan(-slope))
         # deg_0 =f"{0},{0}"
         # data= f"{1},{deg_send}"
@@ -188,9 +182,9 @@ def predict():
 
     # slope redefine based on x_p
     deg_send = x_p*(20/55)
-    deg_0 = f"{0}SE{0}"
-    data = f"{1}SE{deg_send}"
-    sparsePrint("deg_send : ", deg_send)
+    deg_0 = f"{0},{0}"
+    data = f"{1},{deg_send}"
+    print("deg_send : ", deg_send)
 
     # z 좌표 범위 지정
 
@@ -198,7 +192,7 @@ def predict():
         z_array = []
 
     if (ball_cam1[0] != 0 and ball_cam1[1] != 0) and (-len(z_array) == 0 or (len(z_array) == 1 and z_array[0][0] != ball_cam1[0] and z_array[0][1] != ball_cam1[1])):
-        if speed_tm.getAvgTimeMilli() > 0:
+        if speed_tm.getTimeMilli() > 0:
             speed_tm.stop()
 
         tm_diff = speed_tm.getTimeMilli()
@@ -235,7 +229,6 @@ def predict():
 
         # predicted x position
         udp_socket.sendto(str(x_p).encode(), (ip_address, 9999))
-    
 
     if impact_z == 1 and cntz > 0 and len(z_array) == 2 and z_array[1][0] > z_array[0][0]:
         print("impact_z detection succeeded")
@@ -243,16 +236,14 @@ def predict():
 
         # impact, degree
         udp_socket.sendto(data.encode(), (ip_address, 3333))
-        time.sleep(0.8)
+        time.sleep(1)
 
         # set deg to zero (set to initial)
         udp_socket.sendto(deg_0.encode(), (ip_address, 3333))
 
-
-
-    sparsePrint("result z_p: ", Z)
-    sparsePrint("z_array: ", z_array)
-    sparsePrint("X: ", X)
+    print("result z_p: ", Z)
+    print("z_array: ", z_array)
+    print("X: ", X)
 
 # ---------------------------------------------------y_p calc-----------------------------------------------------------
 
@@ -311,16 +302,14 @@ def predict():
 
 # print the text sparsely so that research can read the log simultaneously.
 def sparsePrint(*texts):
-    global print_std
+    print_std = 20
 
     if print_std % 10 == 0:
         for text in texts:
             print(text, end="")
         print_std = 0
-        print()
 
     print_std += 1
-        
 
 
 def reset_params():
@@ -363,7 +352,6 @@ if __name__ == '__main__':
     global impact, impact_z
     global centerX, centerY
     global cnt, cntz
-    global print_std
 
     # set initial color range
     lower_color = [0, 87, 89]
@@ -387,10 +375,8 @@ if __name__ == '__main__':
     impact_z = 0
     cnt = 2
     cntz = 2
-    impactz_std = True
     Z = 0
     X = 0
-    print_std=0
 
     i_main = 0
     h, w = np.array([720, 1280])
@@ -540,15 +526,13 @@ if __name__ == '__main__':
     # the standard for printing current state
     cnt = 2
     cntz = 2
-    cnt = 2
-    cntz = 2
 
     while True:
 
         tm.reset()
 
         tm.start()
-        vision_set()
+        vision_set.start()
 
         if cv2.waitKey(1) & 0xFF == ord('r'):
             reset_params()
@@ -559,29 +543,24 @@ if __name__ == '__main__':
         # maybe std at which the robot should impact
         if ball_cam0[1] < 300 and [ball_cam0[0], ball_cam0[1]] != [0, 0]:
             impact = 1
-            cnt = cnt - 1
         else:
             impact = 0
-            cnt = 2
+            cnt = cnt - 1
 
         if ball_cam1[0] > 50 and [ball_cam1[0], ball_cam1[1]] != [0, 0]:
             impact_z = 1
-            cntz = cntz - 1
         else:
             impact_z = 0
-            cntz = 2
-    
+            cntz = cntz - 1
 
         predict()
-
-        sparsePrint("impact : ", impact)
-        sparsePrint("impact_z : ", impact_z)
-        sparsePrint("cnt : ", cnt)
-        sparsePrint("cntz : ", cntz)
 
         sparsePrint("centerX: ", centerX)
         sparsePrint("centerY: ", centerY)
 
+        sparsePrint("impact: ", impact)
+
+        sparsePrint("cnt : ", cnt)
 
         # if print_std%print_now==0:
         #     print("temp_0: (ignored)", temp_0)
