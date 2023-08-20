@@ -33,15 +33,15 @@
 
 ### 2-2. 컴퓨터 비전부 개요: Computer Vision Overview
 
-**1. Color Detection: HSV 색 기반의 탁구공 인식**
-  Color Range Defined by Human: We tried the methods of 'defining color range based on the pixel HSV value of the ball'. But because of the lack of fps and shutter speed, the color detected differently depending on the ball's speed. Hence, the human defined range which is considered to include all the possible color ofa table-tennis ball (orange).
+**1. Color Detection Based on Color Range Defined by Human: HSV 색 기반의 탁구공 인식**   
+  We tried the methods of 'defining color range based on the pixel HSV value of the ball'. But because of the lack of fps and shutter speed, the color detected differently depending on the ball's speed. Hence, the human defined range which is considered to include all the possible color of a table-tennis ball (orange) and **it hit almost 100% accuracy**.
 
-**2. Linear Regression: 선형 예측**
-  Half table-tennis rally was about 0.4 to 0.6s. As the ball detection accuracy was almost 100%, the detection is occurred 3 ~ 4 times in average. But in the case of human toss the ball near by the table's net, the detection could be occurred only 1 ~ 2 times. Therefore, the linear regression with 2 points was most stable system which we found in practical experiment.
+**2. Linear Regression: 선형 예측**   
+  Half table-tennis rally was about 0.4 to 0.6s. As the ball detection accuracy was almost 100%, the detection is occurred 3 ~ 4 times in average. But in the case of human toss the ball near by the table's net, the detection could be occurred only 1 ~ 2 times. Therefore, **the linear regression with 2 points was most stable system** which we found in practical experiment.
 
 <img width="360px" src="./description-images/linear_regression.png"/>
     
-**3. Mono Vision: 카메라 한 대를 사용한 비전 시스템**
+**3. Mono Vision: 카메라 한 대를 사용한 비전 시스템**   
   We firstly developed the stereo system installed two cameras top seeing down the table. But because of the delay about 0.1s between two cameras which was critical for speedy ball, we should change our camera setting locations or use one camera. We firstly implemented the mono vision system and it worked at some degree. Considering risk of changing locations and limited time to the final competition, we chose to using the mono vision system.
 
 ### 2-3. 로봇 제작 및 제어부 개요: Robot Manufacturing and Control Overview
