@@ -23,7 +23,7 @@
 
 ### 1-3. 카메라 세팅: Cameras Setting
 
-<img width="80%" src="https://github.com/inthree3/tabletennis_robot/assets/42310616/1db7e102-625f-497f-96bb-f76937c18c3d"/>
+<img width="80%" src="./description-images/camera_setting.png"/>
 
 # 2. 목표 및 개요 - Objective and Overview
 
